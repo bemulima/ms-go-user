@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"sync"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
@@ -32,6 +33,7 @@ type cachingClient struct {
 	delegate Client
 	ttl      time.Duration
 	cache    map[string]cacheEntry
+	mu       sync.RWMutex
 }
 
 func NewHTTPClient(baseURL string, timeout time.Duration) Client {
@@ -115,14 +117,21 @@ func (c *cachingClient) cacheKey(parts ...string) string {
 }
 
 func (c *cachingClient) withCache(key string, loader func() (interface{}, error)) (interface{}, error) {
-	if entry, ok := c.cache[key]; ok && time.Now().Before(entry.expiresAt) {
+	now := time.Now()
+	c.mu.RLock()
+	if entry, ok := c.cache[key]; ok && now.Before(entry.expiresAt) {
+		c.mu.RUnlock()
 		return entry.value, nil
 	}
+	c.mu.RUnlock()
+
 	value, err := loader()
 	if err != nil {
 		return nil, err
 	}
+	c.mu.Lock()
 	c.cache[key] = cacheEntry{value: value, expiresAt: time.Now().Add(c.ttl)}
+	c.mu.Unlock()
 	return value, nil
 }
 

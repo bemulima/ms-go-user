@@ -3,6 +3,7 @@ package broker
 import (
 	"context"
 	"encoding/json"
+	"sync"
 	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -17,6 +18,8 @@ type rabbitPublisher struct {
 	conn     *amqp.Connection
 	channel  *amqp.Channel
 	exchange string
+	confirms <-chan amqp.Confirmation
+	mu       sync.Mutex
 }
 
 func NewRabbitMQPublisher(url, exchange string) (Publisher, error) {
@@ -39,15 +42,18 @@ func NewRabbitMQPublisher(url, exchange string) (Publisher, error) {
 		conn.Close()
 		return nil, err
 	}
-	return &rabbitPublisher{conn: conn, channel: ch, exchange: exchange}, nil
+	confirms := ch.NotifyPublish(make(chan amqp.Confirmation, 1))
+	return &rabbitPublisher{conn: conn, channel: ch, exchange: exchange, confirms: confirms}, nil
 }
 
 func (p *rabbitPublisher) Publish(ctx context.Context, routingKey string, payload interface{}) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
 	body, err := json.Marshal(payload)
 	if err != nil {
 		return err
 	}
-	confirm := p.channel.NotifyPublish(make(chan amqp.Confirmation, 1))
 	if err := p.channel.PublishWithContext(ctx, p.exchange, routingKey, false, false, amqp.Publishing{
 		ContentType:  "application/json",
 		DeliveryMode: amqp.Persistent,
@@ -57,14 +63,18 @@ func (p *rabbitPublisher) Publish(ctx context.Context, routingKey string, payloa
 		return err
 	}
 	select {
-	case conf := <-confirm:
-		if !conf.Ack {
+	case conf, ok := <-p.confirms:
+		if !ok || !conf.Ack {
 			return amqp.ErrClosed
 		}
+		return nil
 	case <-ctx.Done():
-		return ctx.Err()
+		err := ctx.Err()
+		if conf, ok := <-p.confirms; !ok || !conf.Ack {
+			return amqp.ErrClosed
+		}
+		return err
 	}
-	return nil
 }
 
 func (p *rabbitPublisher) Close() error {
