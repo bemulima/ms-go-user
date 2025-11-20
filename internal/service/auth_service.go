@@ -16,6 +16,7 @@ import (
 	"github.com/example/user-service/internal/ports/tarantool"
 	"github.com/example/user-service/internal/repo"
 	pkglog "github.com/example/user-service/pkg/log"
+	"gorm.io/gorm"
 )
 
 var (
@@ -27,6 +28,13 @@ type AuthService interface {
 	StartSignup(ctx context.Context, traceID, email, password string) (string, error)
 	VerifySignup(ctx context.Context, traceID, uuid, code string) (*domain.User, *Tokens, error)
 	SignIn(ctx context.Context, traceID, email, password string) (*domain.User, *Tokens, error)
+	HandleOAuthCallback(ctx context.Context, traceID, provider string, info OAuthUserInfo) (*domain.User, *Tokens, error)
+}
+
+type OAuthUserInfo struct {
+	Email       string
+	DisplayName *string
+	AvatarURL   *string
 }
 
 type authService struct {
@@ -37,6 +45,7 @@ type authService struct {
 	tarantool tarantool.Client
 	publisher broker.Publisher
 	jwtSigner JWTSigner
+	avatars   AvatarIngestor
 }
 
 func NewAuthService(
@@ -47,6 +56,7 @@ func NewAuthService(
 	tarantool tarantool.Client,
 	publisher broker.Publisher,
 	jwtSigner JWTSigner,
+	avatars AvatarIngestor,
 ) AuthService {
 	return &authService{
 		cfg:       cfg,
@@ -56,6 +66,7 @@ func NewAuthService(
 		tarantool: tarantool,
 		publisher: publisher,
 		jwtSigner: jwtSigner,
+		avatars:   avatars,
 	}
 }
 
@@ -129,6 +140,57 @@ func (s *authService) SignIn(ctx context.Context, traceID, email, password strin
 		return nil, nil, err
 	}
 	s.logger.Info().Str("trace_id", traceID).Str("user_id", user.ID).Msg("user signed in")
+	return user, tokens, nil
+}
+
+func (s *authService) HandleOAuthCallback(ctx context.Context, traceID, provider string, info OAuthUserInfo) (*domain.User, *Tokens, error) {
+	email := strings.ToLower(info.Email)
+	user, err := s.users.FindByEmail(ctx, email)
+	if err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil, err
+		}
+		user = &domain.User{Email: email, IsActive: true}
+		if err := s.users.Create(ctx, user); err != nil {
+			return nil, nil, err
+		}
+		if s.publisher != nil {
+			_ = s.publisher.Publish(ctx, "user.created", events.NewUserEvent("user.created", user.ID, user.Email, traceID))
+		}
+	}
+
+	profile, err := s.profiles.FindByUserID(ctx, user.ID)
+	if err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil, err
+		}
+		profile = &domain.UserProfile{UserID: user.ID}
+		if err := s.profiles.Create(ctx, profile); err != nil {
+			return nil, nil, err
+		}
+	}
+
+	var avatarURL *string
+	if info.AvatarURL != nil && *info.AvatarURL != "" && s.avatars != nil {
+		stored, ingestErr := s.avatars.Ingest(ctx, traceID, *info.AvatarURL)
+		if ingestErr != nil {
+			s.logger.Warn().Str("trace_id", traceID).Str("provider", provider).Str("avatar_url", *info.AvatarURL).Err(ingestErr).Msg("failed to ingest avatar")
+		} else {
+			avatarURL = &stored
+		}
+	}
+
+	profile.Update(info.DisplayName, avatarURL)
+	if err := s.profiles.Update(ctx, profile); err != nil {
+		return nil, nil, err
+	}
+
+	tokens, err := s.issueTokens(user)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	s.logger.Info().Str("trace_id", traceID).Str("provider", provider).Str("user_id", user.ID).Msg("oauth callback processed")
 	return user, tokens, nil
 }
 

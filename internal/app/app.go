@@ -15,6 +15,7 @@ import (
 
 	"github.com/example/user-service/config"
 	"github.com/example/user-service/internal/ports/broker"
+	"github.com/example/user-service/internal/ports/filestorage"
 	httpport "github.com/example/user-service/internal/ports/http"
 	"github.com/example/user-service/internal/ports/http/handlers"
 	mw "github.com/example/user-service/internal/ports/http/middleware"
@@ -48,6 +49,7 @@ func New(ctx context.Context) (*App, error) {
 	}
 
 	tarantoolClient := tarantool.NewHTTPClient(cfg.TarantoolURL, 5*time.Second)
+	filestorageClient := filestorage.NewHTTPClient(cfg.FileStorageURL, 5*time.Second)
 	rbacHTTP := rbacclient.NewHTTPClient(cfg.RBACURL, 3*time.Second)
 	rbacClient := rbacclient.NewCachingClient(rbacHTTP, time.Minute)
 
@@ -63,8 +65,9 @@ func New(ctx context.Context) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	authService := service.NewAuthService(cfg, logger, userRepo, profileRepo, tarantoolClient, publisher, signer)
-	userService := service.NewUserService(userRepo, profileRepo, identityRepo, tarantoolClient)
+	avatarIngestor := service.NewAvatarIngestor(filestorageClient, logger)
+	authService := service.NewAuthService(cfg, logger, userRepo, profileRepo, tarantoolClient, publisher, signer, avatarIngestor)
+	userService := service.NewUserService(userRepo, profileRepo, tarantoolClient)
 
 	authHandler := handlers.NewAuthHandler(authService)
 	userHandler := handlers.NewUserHandler(userService)

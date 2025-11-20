@@ -30,6 +30,10 @@ func (authServiceStub) SignIn(ctx context.Context, traceID, email, password stri
 	return &domain.User{ID: "user-1", Email: "user@example.com"}, &service.Tokens{AccessToken: "token"}, nil
 }
 
+func (authServiceStub) HandleOAuthCallback(ctx context.Context, traceID, provider string, info service.OAuthUserInfo) (*domain.User, *service.Tokens, error) {
+	return &domain.User{ID: "user-1", Email: info.Email}, &service.Tokens{AccessToken: "token"}, nil
+}
+
 func TestAuthHandlerSignup(t *testing.T) {
 	e := echo.New()
 	handler := handlers.NewAuthHandler(authServiceStub{})

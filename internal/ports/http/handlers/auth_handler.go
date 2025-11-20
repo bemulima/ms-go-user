@@ -44,10 +44,17 @@ type oauthCallbackResponse struct {
 	Tokens *service.Tokens `json:"tokens"`
 }
 
+type oauthCallbackRequest struct {
+	Email       string  `json:"email"`
+	DisplayName *string `json:"display_name"`
+	AvatarURL   *string `json:"avatar_url"`
+}
+
 func (h *AuthHandler) RegisterRoutes(g *echo.Group) {
 	g.POST("/signup", h.Signup)
 	g.POST("/code-verification", h.Verify)
 	g.POST("/signin", h.SignIn)
+	g.POST("/oauth/:provider/callback", h.OAuthCallback)
 }
 
 func (h *AuthHandler) Signup(c echo.Context) error {
@@ -83,6 +90,27 @@ func (h *AuthHandler) SignIn(c echo.Context) error {
 	if err != nil {
 		status := http.StatusUnauthorized
 		return res.ErrorJSON(c, status, "signin_failed", err.Error(), requestIDFromCtx(c), nil)
+	}
+	return c.JSON(http.StatusOK, map[string]interface{}{"user": user, "tokens": tokens})
+}
+
+func (h *AuthHandler) OAuthCallback(c echo.Context) error {
+	provider := c.Param("provider")
+	req := new(oauthCallbackRequest)
+	if err := c.Bind(req); err != nil {
+		return res.ErrorJSON(c, http.StatusBadRequest, "bad_request", "invalid payload", requestIDFromCtx(c), nil)
+	}
+	if req.Email == "" {
+		return res.ErrorJSON(c, http.StatusBadRequest, "bad_request", "email required", requestIDFromCtx(c), nil)
+	}
+
+	user, tokens, err := h.auth.HandleOAuthCallback(c.Request().Context(), requestIDFromCtx(c), provider, service.OAuthUserInfo{
+		Email:       req.Email,
+		DisplayName: req.DisplayName,
+		AvatarURL:   req.AvatarURL,
+	})
+	if err != nil {
+		return res.ErrorJSON(c, http.StatusBadRequest, "oauth_failed", err.Error(), requestIDFromCtx(c), nil)
 	}
 	return c.JSON(http.StatusOK, map[string]interface{}{"user": user, "tokens": tokens})
 }

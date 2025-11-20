@@ -38,6 +38,8 @@ type Config struct {
 	GithubClientSecret string `env:"GITHUB_CLIENT_SECRET"`
 	GithubRedirectURL  string `env:"GITHUB_REDIRECT_URL"`
 
+	FileStorageURL string `env:"MS_FILESTORAGE_URL" envDefault:"http://ms-filestorage:8000"`
+
 	TarantoolURL string `env:"MS_TARANTOOL_URL"`
 	RBACURL      string `env:"MS_RBAC"`
 

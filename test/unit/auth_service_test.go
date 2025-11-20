@@ -120,7 +120,7 @@ func TestAuthService_StartSignup(t *testing.T) {
 	users := newFakeUserRepo()
 	profiles := newFakeProfileRepo()
 	tarantoolClient := &fakeTarantool{}
-	auth := service.NewAuthService(cfg, pkglog.New("test"), users, profiles, tarantoolClient, fakePublisher{}, signer)
+	auth := service.NewAuthService(cfg, pkglog.New("test"), users, profiles, tarantoolClient, fakePublisher{}, signer, nil)
 
 	uuid, err := auth.StartSignup(context.Background(), "trace-1", "user@example.com", "password123")
 	require.NoError(t, err)
@@ -134,7 +134,7 @@ func TestAuthService_VerifySignup(t *testing.T) {
 	users := newFakeUserRepo()
 	profiles := newFakeProfileRepo()
 	tarantoolClient := &fakeTarantool{email: "user@example.com", password: "password123"}
-	auth := service.NewAuthService(cfg, pkglog.New("test"), users, profiles, tarantoolClient, fakePublisher{}, signer)
+	auth := service.NewAuthService(cfg, pkglog.New("test"), users, profiles, tarantoolClient, fakePublisher{}, signer, nil)
 
 	user, tokens, err := auth.VerifySignup(context.Background(), "trace-1", "uuid-1", "code")
 	require.NoError(t, err)
