@@ -58,12 +58,13 @@ func New(ctx context.Context) (*App, error) {
 
 	userRepo := repo.NewUserRepository(db)
 	profileRepo := repo.NewUserProfileRepository(db)
+	identityRepo := repo.NewUserIdentityRepository(db)
 	signer, err := service.NewJWTSigner(cfg)
 	if err != nil {
 		return nil, err
 	}
 	authService := service.NewAuthService(cfg, logger, userRepo, profileRepo, tarantoolClient, publisher, signer)
-	userService := service.NewUserService(userRepo, profileRepo, tarantoolClient)
+	userService := service.NewUserService(userRepo, profileRepo, identityRepo, tarantoolClient)
 
 	authHandler := handlers.NewAuthHandler(authService)
 	userHandler := handlers.NewUserHandler(userService)
