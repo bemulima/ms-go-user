@@ -12,6 +12,7 @@ services:
     depends_on:
       - postgres
       - rabbitmq
+      - nats
     networks:
       - ms-user-service
 
@@ -31,6 +32,15 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+    networks:
+      - ms-user-service
+
+  nats:
+    image: nats:2.10-alpine
+    command: ["-js"]
+    ports:
+      - "4222:4222"
+      - "8222:8222"
     networks:
       - ms-user-service
 

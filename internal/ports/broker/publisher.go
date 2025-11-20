@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/nats-io/nats.go"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
@@ -20,6 +21,11 @@ type rabbitPublisher struct {
 	exchange string
 	confirms <-chan amqp.Confirmation
 	mu       sync.Mutex
+}
+
+type natsPublisher struct {
+	conn *nats.Conn
+	mu   sync.Mutex
 }
 
 func NewRabbitMQPublisher(url, exchange string) (Publisher, error) {
@@ -44,6 +50,14 @@ func NewRabbitMQPublisher(url, exchange string) (Publisher, error) {
 	}
 	confirms := ch.NotifyPublish(make(chan amqp.Confirmation, 1))
 	return &rabbitPublisher{conn: conn, channel: ch, exchange: exchange, confirms: confirms}, nil
+}
+
+func NewNATSPublisher(url string) (Publisher, error) {
+	conn, err := nats.Connect(url)
+	if err != nil {
+		return nil, err
+	}
+	return &natsPublisher{conn: conn}, nil
 }
 
 func (p *rabbitPublisher) Publish(ctx context.Context, routingKey string, payload interface{}) error {
@@ -83,6 +97,28 @@ func (p *rabbitPublisher) Close() error {
 	}
 	if p.conn != nil {
 		return p.conn.Close()
+	}
+	return nil
+}
+
+func (p *natsPublisher) Publish(ctx context.Context, routingKey string, payload interface{}) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+	if err := p.conn.Publish(routingKey, body); err != nil {
+		return err
+	}
+	// FlushWithContext ensures the message is processed or context signals a timeout.
+	return p.conn.FlushWithContext(ctx)
+}
+
+func (p *natsPublisher) Close() error {
+	if p.conn != nil {
+		return p.conn.Drain()
 	}
 	return nil
 }

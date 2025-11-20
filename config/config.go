@@ -43,6 +43,8 @@ type Config struct {
 	TarantoolURL string `env:"MS_TARANTOOL_URL"`
 	RBACURL      string `env:"MS_RBAC"`
 
+	MessageBroker    string `env:"MESSAGE_BROKER" envDefault:"rabbitmq"`
+	NATSURL          string `env:"NATS_URL" envDefault:"nats://localhost:4222"`
 	RabbitMQURL      string `env:"RABBITMQ_URL" envDefault:"amqp://guest:guest@localhost:5672/"`
 	RabbitMQExchange string `env:"RABBITMQ_EXCHANGE" envDefault:"users"`
 

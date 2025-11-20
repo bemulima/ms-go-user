@@ -53,9 +53,19 @@ func New(ctx context.Context) (*App, error) {
 	rbacHTTP := rbacclient.NewHTTPClient(cfg.RBACURL, 3*time.Second)
 	rbacClient := rbacclient.NewCachingClient(rbacHTTP, time.Minute)
 
-	publisher, err := broker.NewRabbitMQPublisher(cfg.RabbitMQURL, cfg.RabbitMQExchange)
-	if err != nil {
-		log.Printf("rabbitmq init failed: %v", err)
+	var publisher broker.Publisher
+	var err error
+	switch cfg.MessageBroker {
+	case "nats":
+		publisher, err = broker.NewNATSPublisher(cfg.NATSURL)
+		if err != nil {
+			log.Printf("nats init failed: %v", err)
+		}
+	default:
+		publisher, err = broker.NewRabbitMQPublisher(cfg.RabbitMQURL, cfg.RabbitMQExchange)
+		if err != nil {
+			log.Printf("rabbitmq init failed: %v", err)
+		}
 	}
 
 	userRepo := repo.NewUserRepository(db)

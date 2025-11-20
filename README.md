@@ -8,7 +8,7 @@ Production-ready Go microservice implementing user management with Clean Archite
 - Classic and OAuth2 (Google/GitHub) authentication with JWT issuance
 - RBAC integration for role and permission checks
 - Postgres persistence via GORM with UUID primary keys
-- RabbitMQ event publication for user lifecycle events
+- RabbitMQ or NATS event publication for user lifecycle events (configurable via `MESSAGE_BROKER`)
 - Clean Architecture layering (domain, repo, service, ports, app)
 - Structured logging, request ID propagation, CORS, health check, and graceful shutdown
 - Docker Compose stack with Postgres, RabbitMQ, Nginx
@@ -52,4 +52,3 @@ pkg/                # shared utility packages (logging, response helpers)
 migrations/         # database migrations
 test/               # unit and integration tests
 ```
-
