@@ -78,15 +78,17 @@ func New(ctx context.Context) (*App, error) {
 	avatarIngestor := service.NewAvatarIngestor(filestorageClient, logger)
 	authService := service.NewAuthService(cfg, logger, userRepo, profileRepo, providerRepo, tarantoolClient, rbacClient, publisher, signer, avatarIngestor)
 	userService := service.NewUserService(userRepo, profileRepo, identityRepo, tarantoolClient)
+	manageService := service.NewUserManageService(userRepo, profileRepo, rbacClient)
 
 	authHandler := handlers.NewAuthHandler(authService)
 	userHandler := handlers.NewUserHandler(userService)
+	manageHandler := handlers.NewUserManageHandler(manageService)
 
 	authMW := mw.NewAuthMiddleware(cfg, logger, rbacClient)
 	rbacMW := mw.NewRBACMiddleware(rbacClient)
 
 	e := echo.New()
-	router := httpport.NewRouter(cfg, authHandler, userHandler, authMW, rbacMW)
+	router := httpport.NewRouter(cfg, authHandler, userHandler, manageHandler, authMW, rbacMW)
 	router.Setup(e)
 
 	return &App{cfg: cfg, logger: logger, db: db, publisher: publisher, echo: e}, nil

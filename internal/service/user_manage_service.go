@@ -1,0 +1,190 @@
+package service
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"strings"
+
+	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
+
+	"github.com/example/user-service/internal/domain"
+	"github.com/example/user-service/internal/ports/rbac"
+	"github.com/example/user-service/internal/repo"
+)
+
+type (
+	// UserManageService exposes administrative operations over users.
+	UserManageService interface {
+		CreateUser(ctx context.Context, req CreateUserRequest) (*domain.User, error)
+		UpdateUser(ctx context.Context, userID string, req UpdateUserRequest) (*domain.User, error)
+		ChangeStatus(ctx context.Context, userID string, status domain.UserStatus) (*domain.User, error)
+		ChangeRole(ctx context.Context, userID, role string) error
+	}
+
+	CreateUserRequest struct {
+		Email       string
+		Password    string
+		DisplayName *string
+		AvatarURL   *string
+		Role        string
+		Status      domain.UserStatus
+	}
+
+	UpdateUserRequest struct {
+		Email       *string
+		Password    *string
+		DisplayName *string
+		AvatarURL   *string
+	}
+)
+
+type userManageService struct {
+	users    repo.UserRepository
+	profiles repo.UserProfileRepository
+	rbac     rbac.Client
+}
+
+func NewUserManageService(users repo.UserRepository, profiles repo.UserProfileRepository, rbacClient rbac.Client) UserManageService {
+	return &userManageService{users: users, profiles: profiles, rbac: rbacClient}
+}
+
+func (s *userManageService) CreateUser(ctx context.Context, req CreateUserRequest) (*domain.User, error) {
+	email := strings.ToLower(strings.TrimSpace(req.Email))
+	if err := validateEmail(email); err != nil {
+		return nil, err
+	}
+	if err := validatePassword(req.Password); err != nil {
+		return nil, err
+	}
+	status := req.Status
+	if status == "" {
+		status = domain.UserStatusActive
+	}
+	if !status.IsValid() {
+		return nil, fmt.Errorf("invalid status")
+	}
+	role := strings.TrimSpace(req.Role)
+	if role == "" {
+		return nil, fmt.Errorf("role is required")
+	}
+	if _, err := s.users.FindByEmail(ctx, email); err == nil {
+		return nil, fmt.Errorf("user already exists")
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, err
+	}
+	user := &domain.User{Email: email}
+	if err := user.SetStatus(status); err != nil {
+		return nil, err
+	}
+	user.SetPasswordHash(string(hash))
+	if err := s.users.Create(ctx, user); err != nil {
+		return nil, err
+	}
+
+	profile := &domain.UserProfile{
+		UserID:      user.ID,
+		DisplayName: req.DisplayName,
+		AvatarURL:   req.AvatarURL,
+	}
+	if err := s.profiles.Create(ctx, profile); err != nil {
+		_ = s.users.Delete(ctx, user.ID)
+		return nil, err
+	}
+
+	if s.rbac == nil {
+		_ = s.users.Delete(ctx, user.ID)
+		return nil, fmt.Errorf("rbac client not configured")
+	}
+	if err := s.rbac.AssignRole(ctx, user.ID, role); err != nil {
+		_ = s.users.Delete(ctx, user.ID)
+		return nil, err
+	}
+
+	user.Profile = profile
+	return user, nil
+}
+
+func (s *userManageService) UpdateUser(ctx context.Context, userID string, req UpdateUserRequest) (*domain.User, error) {
+	user, err := s.users.FindByID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	if req.Email != nil {
+		email := strings.ToLower(strings.TrimSpace(*req.Email))
+		if err := validateEmail(email); err != nil {
+			return nil, err
+		}
+		existing, err := s.users.FindByEmail(ctx, email)
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, err
+		}
+		if existing != nil && existing.ID != userID {
+			return nil, fmt.Errorf("email already in use")
+		}
+		user.Email = email
+	}
+
+	if req.Password != nil {
+		if err := validatePassword(*req.Password); err != nil {
+			return nil, err
+		}
+		hash, err := bcrypt.GenerateFromPassword([]byte(*req.Password), bcrypt.DefaultCost)
+		if err != nil {
+			return nil, err
+		}
+		user.SetPasswordHash(string(hash))
+	}
+
+	if req.DisplayName != nil || req.AvatarURL != nil {
+		profile, err := s.profiles.FindByUserID(ctx, userID)
+		if err != nil {
+			return nil, err
+		}
+		profile.Update(req.DisplayName, req.AvatarURL)
+		if err := s.profiles.Update(ctx, profile); err != nil {
+			return nil, err
+		}
+		user.Profile = profile
+	}
+
+	if err := s.users.Update(ctx, user); err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
+func (s *userManageService) ChangeStatus(ctx context.Context, userID string, status domain.UserStatus) (*domain.User, error) {
+	user, err := s.users.FindByID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	if err := user.SetStatus(status); err != nil {
+		return nil, err
+	}
+	if err := s.users.Update(ctx, user); err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
+func (s *userManageService) ChangeRole(ctx context.Context, userID, role string) error {
+	role = strings.TrimSpace(role)
+	if role == "" {
+		return fmt.Errorf("role is required")
+	}
+	if s.rbac == nil {
+		return fmt.Errorf("rbac client not configured")
+	}
+	if _, err := s.users.FindByID(ctx, userID); err != nil {
+		return err
+	}
+	return s.rbac.AssignRole(ctx, userID, role)
+}

@@ -150,7 +150,7 @@ func (s *authService) VerifySignup(ctx context.Context, traceID, uuid, code stri
 	if existing != nil {
 		return nil, nil, fmt.Errorf("user already exists")
 	}
-	user := &domain.User{Email: normEmail, IsActive: true}
+	user := &domain.User{Email: normEmail, IsActive: true, Status: domain.UserStatusActive}
 	hashStr := string(hash)
 	user.SetPasswordHash(hashStr)
 	if err := s.users.Create(ctx, user); err != nil {
@@ -249,7 +249,7 @@ func (s *authService) HandleOAuthCallback(ctx context.Context, traceID, provider
 	created := false
 	if user == nil {
 		created = true
-		user = &domain.User{Email: normalizedEmail, IsActive: true}
+		user = &domain.User{Email: normalizedEmail, IsActive: true, Status: domain.UserStatusActive}
 		if err := s.users.Create(ctx, user); err != nil {
 			return nil, nil, err
 		}
@@ -684,7 +684,7 @@ func (s *authService) upsertOAuthUser(ctx context.Context, profile *oauthProfile
 	existing, err := s.users.FindByEmail(ctx, email)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			user = &domain.User{Email: email, IsActive: true}
+			user = &domain.User{Email: email, IsActive: true, Status: domain.UserStatusActive}
 			if err := s.users.Create(ctx, user); err != nil {
 				return nil, err
 			}

@@ -1,0 +1,6 @@
+ALTER TABLE "user"
+    ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'ACTIVE';
+
+UPDATE "user"
+SET status = CASE WHEN is_active THEN 'ACTIVE' ELSE 'INACTIVE' END
+WHERE status IS NULL OR status = '';

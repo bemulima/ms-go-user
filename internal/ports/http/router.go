@@ -13,15 +13,16 @@ import (
 )
 
 type Router struct {
-	cfg         *config.Config
-	authHandler *handlers.AuthHandler
-	userHandler *handlers.UserHandler
-	authMW      *authmw.AuthMiddleware
-	rbacMW      *authmw.RBACMiddleware
+	cfg           *config.Config
+	authHandler   *handlers.AuthHandler
+	userHandler   *handlers.UserHandler
+	manageHandler *handlers.UserManageHandler
+	authMW        *authmw.AuthMiddleware
+	rbacMW        *authmw.RBACMiddleware
 }
 
-func NewRouter(cfg *config.Config, authHandler *handlers.AuthHandler, userHandler *handlers.UserHandler, authMW *authmw.AuthMiddleware, rbacMW *authmw.RBACMiddleware) *Router {
-	return &Router{cfg: cfg, authHandler: authHandler, userHandler: userHandler, authMW: authMW, rbacMW: rbacMW}
+func NewRouter(cfg *config.Config, authHandler *handlers.AuthHandler, userHandler *handlers.UserHandler, manageHandler *handlers.UserManageHandler, authMW *authmw.AuthMiddleware, rbacMW *authmw.RBACMiddleware) *Router {
+	return &Router{cfg: cfg, authHandler: authHandler, userHandler: userHandler, manageHandler: manageHandler, authMW: authMW, rbacMW: rbacMW}
 }
 
 func (r *Router) Setup(e *echo.Echo) {
@@ -44,6 +45,7 @@ func (r *Router) Setup(e *echo.Echo) {
 	userGroup := e.Group("/users", r.authMW.Handler)
 	r.userHandler.RegisterRoutes(userGroup)
 
-	adminGroup := e.Group("/admin/users", r.authMW.Handler, r.rbacMW.RequireRole("moderator"))
-	adminGroup.GET("", r.userHandler.GetByID)
+	adminGroup := e.Group("/admin/users", r.authMW.Handler, r.rbacMW.RequireAnyRole("admin", "moderator"))
+	r.manageHandler.RegisterRoutes(adminGroup)
+	adminGroup.GET("/:id", r.userHandler.GetByID)
 }

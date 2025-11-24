@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/labstack/echo/v4"
 
@@ -18,6 +19,20 @@ func NewRBACMiddleware(client rbacclient.Client) *RBACMiddleware {
 }
 
 func (m *RBACMiddleware) RequireRole(role string) echo.MiddlewareFunc {
+	return m.requireRoles([]string{role})
+}
+
+func (m *RBACMiddleware) RequireAnyRole(roles ...string) echo.MiddlewareFunc {
+	return m.requireRoles(roles)
+}
+
+func (m *RBACMiddleware) requireRoles(roles []string) echo.MiddlewareFunc {
+	validRoles := make([]string, 0, len(roles))
+	for _, role := range roles {
+		if trimmed := strings.TrimSpace(role); trimmed != "" {
+			validRoles = append(validRoles, trimmed)
+		}
+	}
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			userID, _ := c.Get("user_id").(string)
@@ -26,11 +41,31 @@ func (m *RBACMiddleware) RequireRole(role string) echo.MiddlewareFunc {
 			}
 			allowed := false
 			if cached, ok := c.Get("role").(string); ok {
-				allowed = cached == role
-			} else if m.client != nil {
-				ok, err := m.client.CheckRole(c.Request().Context(), userID, role)
-				if err == nil {
-					allowed = ok
+				for _, r := range validRoles {
+					if cached == r {
+						allowed = true
+						break
+					}
+				}
+			}
+			if !allowed && m.client != nil {
+				if cachedRole, err := m.client.GetRoleByUserID(c.Request().Context(), userID); err == nil {
+					c.Set("role", cachedRole)
+					for _, r := range validRoles {
+						if cachedRole == r {
+							allowed = true
+							break
+						}
+					}
+				}
+				if !allowed {
+					for _, r := range validRoles {
+						ok, err := m.client.CheckRole(c.Request().Context(), userID, r)
+						if err == nil && ok {
+							allowed = true
+							break
+						}
+					}
 				}
 			}
 			if !allowed {
