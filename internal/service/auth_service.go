@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 
@@ -36,6 +37,7 @@ type AuthService interface {
 	VerifySignup(ctx context.Context, traceID, uuid, code string) (*domain.User, *Tokens, error)
 	SignIn(ctx context.Context, traceID, email, password string) (*domain.User, *Tokens, error)
 	HandleOAuthCallback(ctx context.Context, traceID, provider string, info OAuthUserInfo) (*domain.User, *Tokens, error)
+	RefreshTokens(ctx context.Context, traceID, refreshToken string) (*domain.User, *Tokens, error)
 }
 
 type OAuthProvider string
@@ -297,6 +299,58 @@ func (s *authService) HandleOAuthCallback(ctx context.Context, traceID, provider
 	}
 
 	s.logger.Info().Str("trace_id", traceID).Str("provider", providerType).Str("user_id", user.ID).Msg("oauth callback processed")
+	return user, tokens, nil
+}
+
+func (s *authService) RefreshTokens(ctx context.Context, traceID, refreshToken string) (*domain.User, *Tokens, error) {
+	if strings.TrimSpace(refreshToken) == "" {
+		return nil, nil, ErrInvalidCredentials
+	}
+	token, err := jwt.Parse(refreshToken, func(t *jwt.Token) (interface{}, error) {
+		if s.cfg.JWTSecret != "" {
+			if t.Method.Alg() != jwt.SigningMethodHS256.Alg() {
+				return nil, fmt.Errorf("unexpected signing method: %s", t.Method.Alg())
+			}
+			return []byte(s.cfg.JWTSecret), nil
+		}
+		if s.cfg.JWTPublicKey != "" {
+			if t.Method.Alg() != jwt.SigningMethodRS256.Alg() {
+				return nil, fmt.Errorf("unexpected signing method: %s", t.Method.Alg())
+			}
+			return jwt.ParseRSAPublicKeyFromPEM([]byte(s.cfg.JWTPublicKey))
+		}
+		return nil, fmt.Errorf("jwt secret or public key must be provided")
+	})
+	if err != nil || token == nil || !token.Valid {
+		return nil, nil, ErrInvalidCredentials
+	}
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, nil, ErrInvalidCredentials
+	}
+	if typ, _ := claims["typ"].(string); typ != "refresh" {
+		return nil, nil, ErrInvalidCredentials
+	}
+	subject, _ := claims["sub"].(string)
+	if subject == "" {
+		return nil, nil, ErrInvalidCredentials
+	}
+	user, err := s.users.FindByID(ctx, subject)
+	if err != nil {
+		return nil, nil, ErrInvalidCredentials
+	}
+	if !user.IsActive {
+		return nil, nil, ErrUserInactive
+	}
+	role, err := s.resolveRole(ctx, user.ID)
+	if err != nil {
+		return nil, nil, err
+	}
+	tokens, err := s.issueTokens(user, role)
+	if err != nil {
+		return nil, nil, err
+	}
+	s.logger.Info().Str("trace_id", traceID).Str("user_id", user.ID).Msg("tokens refreshed")
 	return user, tokens, nil
 }
 

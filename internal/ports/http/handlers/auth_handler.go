@@ -53,10 +53,15 @@ type oauthCallbackRequest struct {
 	Metadata       map[string]interface{} `json:"metadata"`
 }
 
+type refreshRequest struct {
+	RefreshToken string `json:"refresh_token"`
+}
+
 func (h *AuthHandler) RegisterRoutes(g *echo.Group) {
 	g.POST("/signup", h.Signup)
 	g.POST("/code-verification", h.Verify)
 	g.POST("/signin", h.SignIn)
+	g.POST("/refresh", h.Refresh)
 	g.POST("/oauth/callback", h.HandleOAuthCallback)
 	g.POST("/oauth/:provider/callback", h.OAuthCallback)
 }
@@ -99,6 +104,20 @@ func (h *AuthHandler) SignIn(c echo.Context) error {
 		status := http.StatusUnauthorized
 		return res.ErrorJSON(c, status, "signin_failed", err.Error(), requestIDFromCtx(c), nil)
 	}
+	return c.JSON(http.StatusOK, map[string]interface{}{"user": user, "tokens": tokens})
+}
+
+func (h *AuthHandler) Refresh(c echo.Context) error {
+	req := new(refreshRequest)
+	if err := c.Bind(req); err != nil {
+		return res.ErrorJSON(c, http.StatusBadRequest, "bad_request", "invalid payload", requestIDFromCtx(c), nil)
+	}
+	user, tokens, err := h.auth.RefreshTokens(c.Request().Context(), requestIDFromCtx(c), req.RefreshToken)
+	if err != nil {
+		return res.ErrorJSON(c, http.StatusUnauthorized, "refresh_failed", err.Error(), requestIDFromCtx(c), nil)
+	}
+	c.Response().Header().Set(echo.HeaderAuthorization, "Bearer "+tokens.AccessToken)
+	c.Response().Header().Set("refresh_token", tokens.RefreshToken)
 	return c.JSON(http.StatusOK, map[string]interface{}{"user": user, "tokens": tokens})
 }
 

@@ -17,8 +17,9 @@ import (
 )
 
 type authServiceStub struct {
-	lastProvider  string
-	lastOAuthInfo *service.OAuthUserInfo
+	lastProvider     string
+	lastOAuthInfo    *service.OAuthUserInfo
+	lastRefreshToken string
 }
 
 func (authServiceStub) StartSignup(ctx context.Context, traceID, email, password string) (string, error) {
@@ -37,6 +38,11 @@ func (s *authServiceStub) HandleOAuthCallback(ctx context.Context, traceID, prov
 	s.lastProvider = provider
 	s.lastOAuthInfo = &info
 	return &domain.User{ID: "user-1", Email: "user@example.com"}, &service.Tokens{AccessToken: "token"}, nil
+}
+
+func (s *authServiceStub) RefreshTokens(ctx context.Context, traceID, refreshToken string) (*domain.User, *service.Tokens, error) {
+	s.lastRefreshToken = refreshToken
+	return &domain.User{ID: "user-1", Email: "user@example.com"}, &service.Tokens{AccessToken: "new-token", RefreshToken: "new-refresh"}, nil
 }
 
 func TestAuthHandlerSignup(t *testing.T) {
@@ -70,6 +76,26 @@ func TestAuthHandlerVerify(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rec.Code)
 	assert.Equal(t, "Bearer token", rec.Header().Get(echo.HeaderAuthorization))
 	assert.Equal(t, "refresh", rec.Header().Get("refresh_token"))
+}
+
+func TestAuthHandlerRefresh(t *testing.T) {
+	e := echo.New()
+	stub := &authServiceStub{}
+	handler := handlers.NewAuthHandler(stub)
+
+	reqBody, _ := json.Marshal(map[string]string{"refresh_token": "refresh"})
+	req := httptest.NewRequest(http.MethodPost, "/auth/refresh", bytes.NewReader(reqBody))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	err := handler.Refresh(c)
+
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.Equal(t, "refresh", stub.lastRefreshToken)
+	assert.Equal(t, "Bearer new-token", rec.Header().Get(echo.HeaderAuthorization))
+	assert.Equal(t, "new-refresh", rec.Header().Get("refresh_token"))
 }
 
 func TestAuthHandlerOAuthCallback(t *testing.T) {
