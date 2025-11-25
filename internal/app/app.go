@@ -19,6 +19,7 @@ import (
 	httpport "github.com/example/user-service/internal/ports/http"
 	"github.com/example/user-service/internal/ports/http/handlers"
 	mw "github.com/example/user-service/internal/ports/http/middleware"
+	"github.com/example/user-service/internal/ports/imageprocessor"
 	rbacclient "github.com/example/user-service/internal/ports/rbac"
 	"github.com/example/user-service/internal/ports/tarantool"
 	"github.com/example/user-service/internal/repo"
@@ -81,7 +82,12 @@ func New(ctx context.Context) (*App, error) {
 	manageService := service.NewUserManageService(userRepo, profileRepo, rbacClient)
 
 	authHandler := handlers.NewAuthHandler(authService)
-	userHandler := handlers.NewUserHandler(userService)
+	var imageProcClient imageprocessor.Client
+	if cfg.ImageProcessorURL != "" {
+		imageProcClient = imageprocessor.NewHTTPClient(cfg.ImageProcessorURL, 10*time.Second)
+	}
+
+	userHandler := handlers.NewUserHandler(userService, filestorageClient, imageProcClient, cfg.AvatarPresetGroup, cfg.AvatarFileKind)
 	manageHandler := handlers.NewUserManageHandler(manageService)
 
 	authMW := mw.NewAuthMiddleware(cfg, logger, rbacClient)

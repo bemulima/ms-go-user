@@ -15,7 +15,7 @@ import (
 )
 
 type AvatarIngestor interface {
-	Ingest(ctx context.Context, traceID, avatarURL string) (string, error)
+	Ingest(ctx context.Context, traceID, ownerID, avatarURL string) (string, error)
 }
 
 type avatarIngestor struct {
@@ -34,7 +34,7 @@ func NewAvatarIngestor(storage filestorage.Client, logger pkglog.Logger) AvatarI
 	}
 }
 
-func (a *avatarIngestor) Ingest(ctx context.Context, traceID, avatarURL string) (string, error) {
+func (a *avatarIngestor) Ingest(ctx context.Context, traceID, ownerID, avatarURL string) (string, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, avatarURL, nil)
 	if err != nil {
 		return "", err
@@ -56,13 +56,21 @@ func (a *avatarIngestor) Ingest(ctx context.Context, traceID, avatarURL string) 
 	}
 
 	fileName := deriveFileName(avatarURL)
-	uploadedURL, err := a.storage.Upload(ctx, fileName, res.Header.Get("Content-Type"), body)
+	uploadResp, err := a.storage.Upload(ctx, filestorage.UploadRequest{
+		OwnerID:        ownerID,
+		FileKind:       "USER_MEDIA",
+		ProcessingMode: "DISABLED",
+		FileName:       fileName,
+		ContentType:    res.Header.Get("Content-Type"),
+		Data:           body,
+	})
 	if err != nil {
 		return "", err
 	}
 
-	a.logger.Info().Str("trace_id", traceID).Str("avatar", avatarURL).Str("stored_url", uploadedURL).Msg("avatar ingested")
-	return uploadedURL, nil
+	storedURL := a.storage.DownloadURL(uploadResp.ID)
+	a.logger.Info().Str("trace_id", traceID).Str("avatar", avatarURL).Str("stored_url", storedURL).Msg("avatar ingested")
+	return storedURL, nil
 }
 
 func deriveFileName(rawURL string) string {

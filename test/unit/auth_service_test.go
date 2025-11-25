@@ -252,7 +252,7 @@ func (fakePublisher) Close() error { return nil }
 
 type fakeAvatarIngestor struct{}
 
-func (fakeAvatarIngestor) Ingest(ctx context.Context, traceID, avatarURL string) (string, error) {
+func (fakeAvatarIngestor) Ingest(ctx context.Context, traceID, ownerID, avatarURL string) (string, error) {
 	return avatarURL, nil
 }
 

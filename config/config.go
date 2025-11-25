@@ -38,7 +38,10 @@ type Config struct {
 	GithubClientSecret string `env:"GITHUB_CLIENT_SECRET"`
 	GithubRedirectURL  string `env:"GITHUB_REDIRECT_URL"`
 
-	FileStorageURL string `env:"MS_FILESTORAGE_URL" envDefault:"http://ms-filestorage:8000"`
+	FileStorageURL    string `env:"MS_FILESTORAGE_URL" envDefault:"http://ms-filestorage:8000"`
+	ImageProcessorURL string `env:"MS_IMAGE_PROCESSOR_URL"`
+	AvatarPresetGroup string `env:"AVATAR_PRESET_GROUP" envDefault:"avatar"`
+	AvatarFileKind    string `env:"AVATAR_FILE_KIND" envDefault:"USER_MEDIA"`
 
 	TarantoolURL string `env:"MS_TARANTOOL_URL"`
 	RBACURL      string `env:"MS_RBAC"`
