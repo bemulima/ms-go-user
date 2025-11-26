@@ -1,0 +1,1 @@
+-- No-op: seeded IDs remain deterministic.

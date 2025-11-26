@@ -1,0 +1,43 @@
+version: '3'
+
+dotenv: ['.env']
+
+vars:
+  DB_CONTAINER: postgres
+  DB_USER: '{{.DB_USER | default "app"}}'
+  DB_PASSWORD: '{{.DB_PASSWORD | default "app_password"}}'
+  DB_NAME: '{{.DB_NAME | default "userdb"}}'
+  DB_SSLMODE: '{{.DB_SSLMODE | default "disable"}}'
+
+tasks:
+  up:
+    desc: Start Postgres container
+    cmds:
+      - docker compose up -d {{.DB_CONTAINER}}
+
+  migrate-up:
+    desc: Apply SQL migrations in order using psql inside Postgres container
+    cmds:
+      - |
+        set -euo pipefail
+        for f in $(ls migrations/*up.sql | sort); do
+          echo "==> running $f"
+          cat "$f" | docker compose exec -T {{.DB_CONTAINER}} psql -U {{.DB_USER}} -d {{.DB_NAME}}
+        done
+
+  migrate-down:
+    desc: Roll back SQL migrations in reverse order using psql inside Postgres container
+    cmds:
+      - |
+        set -euo pipefail
+        for f in $(ls migrations/*down.sql | sort -r); do
+          echo "==> running $f"
+          cat "$f" | docker compose exec -T {{.DB_CONTAINER}} psql -U {{.DB_USER}} -d {{.DB_NAME}}
+        done
+
+  create-rbac-db:
+    desc: Create rbacdb database in the same Postgres instance if it does not exist
+    cmds:
+      - |
+        docker compose exec -T {{.DB_CONTAINER}} psql -U {{.DB_USER}} -d postgres -v ON_ERROR_STOP=1 -c "SELECT 1 FROM pg_database WHERE datname='rbacdb'" >/dev/null 2>&1 \
+          || docker compose exec -T {{.DB_CONTAINER}} psql -U {{.DB_USER}} -d postgres -v ON_ERROR_STOP=1 -c "CREATE DATABASE rbacdb"
