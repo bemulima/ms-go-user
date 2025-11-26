@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 
 	"github.com/example/user-service/config"
@@ -445,4 +446,36 @@ func TestAuthService_HandleOAuthCallback_InactiveUser(t *testing.T) {
 	assert.ErrorIs(t, err, service.ErrUserInactive)
 	assert.Nil(t, user)
 	assert.Nil(t, tokens)
+}
+
+func TestAuthService_SignIn_ResolvesRoleAndSetsJWT(t *testing.T) {
+	cfg := &config.Config{JWTSecret: "secret", JWTTTLMinutes: time.Minute, JWTRefreshTTLMinutes: time.Hour}
+	jwtSigner := &recordingJWTSigner{}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte("Password123!"), bcrypt.DefaultCost)
+	require.NoError(t, err)
+	pw := string(hash)
+
+	users := newFakeUserRepo()
+	users.users["user@example.com"] = &domain.User{
+		ID:           "user-1",
+		Email:        "user@example.com",
+		PasswordHash: &pw,
+		IsActive:     true,
+	}
+
+	rbacClient := &recordingRBACClient{roleByUser: map[string]string{"user-1": "admin"}}
+
+	auth := service.NewAuthService(cfg, pkglog.New("test"), users, newFakeProfileRepo(), newFakeProviderRepo(), &fakeTarantool{}, rbacClient, fakePublisher{}, jwtSigner, fakeAvatarIngestor{})
+
+	user, tokens, err := auth.SignIn(context.Background(), "trace-1", "user@example.com", "Password123!")
+	require.NoError(t, err)
+	require.NotNil(t, user)
+	require.NotNil(t, tokens)
+
+	assert.Equal(t, []string{"user-1"}, rbacClient.getRoleCalls)
+	require.NotNil(t, jwtSigner.claims)
+	assert.Equal(t, "admin", jwtSigner.claims["role"])
+	assert.Equal(t, "access-token", tokens.AccessToken)
+	assert.Equal(t, "refresh-token", tokens.RefreshToken)
 }
