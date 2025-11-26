@@ -4,10 +4,17 @@ set -euo pipefail
 # Simple end-to-end smoke for avatar upload + variant generation across user-service, filestorage, image-processor.
 # Requires the microservices repo layout (ms-go-user, ms-go-filestorage, ms-go-image-processor) to be siblings.
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-FS_DIR="${ROOT}/ms-go-filestorage"
-IMG_DIR="${ROOT}/ms-go-image-processor"
-USER_DIR="${ROOT}/ms-go-user"
+ROOT="${ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}"
+FS_DIR="${FS_DIR:-${ROOT}/ms-go-filestorage}"
+IMG_DIR="${IMG_DIR:-${ROOT}/ms-go-image-processor}"
+USER_DIR="${USER_DIR:-${ROOT}/ms-go-user}"
+
+for dir in "$FS_DIR" "$IMG_DIR" "$USER_DIR"; do
+  if [[ ! -d "$dir" ]]; then
+    echo "[-] required directory not found: $dir"
+    exit 1
+  fi
+done
 
 PROJECT="e2e-avatar"
 
