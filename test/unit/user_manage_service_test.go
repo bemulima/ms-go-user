@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/example/user-service/internal/domain"
-	"github.com/example/user-service/internal/service"
+	"github.com/example/user-service/internal/usecase"
 )
 
 func TestUserManageService_CreateUser(t *testing.T) {

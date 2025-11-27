@@ -13,6 +13,9 @@ func TestAvatarE2E(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping e2e in short mode")
 	}
+	if os.Getenv("RUN_E2E_DOCKER") != "1" {
+		t.Skip("skipping e2e: set RUN_E2E_DOCKER=1 to enable Docker-dependent flow")
+	}
 	script, err := findScript()
 	if err != nil {
 		t.Fatalf("locate script: %v", err)

@@ -6,7 +6,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	rbacclient "github.com/example/user-service/internal/ports/rbac"
+	rbacclient "github.com/example/user-service/internal/adapter/rbac"
 	res "github.com/example/user-service/pkg/http"
 )
 

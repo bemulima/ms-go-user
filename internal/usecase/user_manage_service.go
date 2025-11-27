@@ -9,9 +9,9 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 
+	"github.com/example/user-service/internal/adapter/postgres"
+	"github.com/example/user-service/internal/adapter/rbac"
 	"github.com/example/user-service/internal/domain"
-	"github.com/example/user-service/internal/ports/rbac"
-	"github.com/example/user-service/internal/repo"
 )
 
 type (

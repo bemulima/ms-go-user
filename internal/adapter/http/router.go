@@ -7,8 +7,8 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 
 	"github.com/example/user-service/config"
-	"github.com/example/user-service/internal/ports/http/handlers"
-	authmw "github.com/example/user-service/internal/ports/http/middleware"
+	"github.com/example/user-service/internal/adapter/http/handlers"
+	authmw "github.com/example/user-service/internal/adapter/http/middleware"
 	res "github.com/example/user-service/pkg/http"
 )
 

@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/example/user-service/internal/adapter/postgres"
+	"github.com/example/user-service/internal/adapter/tarantool"
 	"github.com/example/user-service/internal/domain"
-	"github.com/example/user-service/internal/ports/tarantool"
-	"github.com/example/user-service/internal/repo"
 )
 
 type UserService interface {

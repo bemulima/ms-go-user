@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/example/user-service/internal/ports/filestorage"
+	"github.com/example/user-service/internal/adapter/filestorage"
 	pkglog "github.com/example/user-service/pkg/log"
 )
 

@@ -13,9 +13,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 
+	"github.com/example/user-service/internal/adapter/http/handlers"
 	"github.com/example/user-service/internal/domain"
-	"github.com/example/user-service/internal/ports/http/handlers"
-	"github.com/example/user-service/internal/service"
+	"github.com/example/user-service/internal/usecase"
 )
 
 func TestUserManageHandler_CreateUser(t *testing.T) {

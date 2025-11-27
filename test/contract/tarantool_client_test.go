@@ -5,13 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/example/user-service/internal/ports/tarantool"
+	"github.com/example/user-service/internal/adapter/tarantool"
 )
 
 const (
@@ -21,7 +20,10 @@ const (
 
 func TestTarantoolClientContract(t *testing.T) {
 	server := newContractServer()
-	ts := httptest.NewServer(server)
+	ts := startServerOrSkip(t, server)
+	if ts == nil {
+		return
+	}
 	defer ts.Close()
 
 	client := tarantool.NewHTTPClient(ts.URL, 2*time.Second)

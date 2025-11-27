@@ -9,7 +9,7 @@ Production-ready Go microservice implementing user management with Clean Archite
 - RBAC integration for role and permission checks
 - Postgres persistence via GORM with UUID primary keys
 - RabbitMQ or NATS event publication for user lifecycle events (configurable via `MESSAGE_BROKER`)
-- Clean Architecture layering (domain, repo, service, ports, app)
+- Clean Architecture layering (domain, usecase, port contracts, adapters, app)
 - Structured logging, request ID propagation, CORS, health check, and graceful shutdown
 - Docker Compose stack with Postgres, RabbitMQ, Nginx
 - TDD-first unit and integration tests using `go test`
@@ -41,14 +41,17 @@ Requests carry an `X-Request-ID` header. Structured logs are emitted via Zerolog
 ## Architecture Overview
 
 ```
-cmd/                # main entrypoint
-config/             # environment configuration loading
-internal/domain/    # domain entities
-internal/repo/      # repository interfaces and GORM implementations
-internal/service/   # business logic services (auth, user)
-internal/ports/     # adapters: HTTP handlers, middleware, external clients, broker
-internal/app/       # composition root / DI
-pkg/                # shared utility packages (logging, response helpers)
-migrations/         # database migrations
-test/               # unit and integration tests
+cmd/                          # main entrypoint
+config/                       # environment configuration loading
+internal/domain/              # domain entities and value objects
+internal/usecase/             # business logic (auth, user, manage)
+internal/adapter/http/        # Echo router, handlers, middleware
+internal/adapter/postgres/    # GORM repositories
+internal/adapter/{rbac,broker,filestorage,imageprocessor,tarantool}/ # external clients
+internal/app/                 # composition root / DI
+pkg/                          # shared utility packages (logging, HTTP helpers)
+migrations/                   # database migrations
+test/                         # unit and integration tests
 ```
+
+Layering rules: `usecase` depends only on `domain` + `port`-like interfaces; adapters implement those interfaces and are wired in `app`. HTTP and broker transports stay under `internal/adapter`.

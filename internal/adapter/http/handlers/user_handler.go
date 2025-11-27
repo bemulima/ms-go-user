@@ -7,10 +7,10 @@ import (
 
 	"github.com/labstack/echo/v4"
 
+	"github.com/example/user-service/internal/adapter/filestorage"
+	"github.com/example/user-service/internal/adapter/imageprocessor"
 	"github.com/example/user-service/internal/domain"
-	"github.com/example/user-service/internal/ports/filestorage"
-	"github.com/example/user-service/internal/ports/imageprocessor"
-	"github.com/example/user-service/internal/service"
+	"github.com/example/user-service/internal/usecase"
 	res "github.com/example/user-service/pkg/http"
 )
 

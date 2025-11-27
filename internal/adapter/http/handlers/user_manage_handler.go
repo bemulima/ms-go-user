@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/example/user-service/internal/domain"
-	"github.com/example/user-service/internal/service"
+	"github.com/example/user-service/internal/usecase"
 	res "github.com/example/user-service/pkg/http"
 )
 

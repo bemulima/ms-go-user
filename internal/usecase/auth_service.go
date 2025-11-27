@@ -16,12 +16,12 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/example/user-service/config"
+	"github.com/example/user-service/internal/adapter/broker"
+	"github.com/example/user-service/internal/adapter/postgres"
+	"github.com/example/user-service/internal/adapter/rbac"
+	"github.com/example/user-service/internal/adapter/tarantool"
 	"github.com/example/user-service/internal/domain"
 	"github.com/example/user-service/internal/events"
-	"github.com/example/user-service/internal/ports/broker"
-	"github.com/example/user-service/internal/ports/rbac"
-	"github.com/example/user-service/internal/ports/tarantool"
-	"github.com/example/user-service/internal/repo"
 	pkglog "github.com/example/user-service/pkg/log"
 )
 

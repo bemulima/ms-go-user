@@ -13,9 +13,9 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/example/user-service/config"
+	"github.com/example/user-service/internal/adapter/tarantool"
 	"github.com/example/user-service/internal/domain"
-	"github.com/example/user-service/internal/ports/tarantool"
-	"github.com/example/user-service/internal/service"
+	"github.com/example/user-service/internal/usecase"
 	pkglog "github.com/example/user-service/pkg/log"
 )
 

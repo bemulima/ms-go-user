@@ -5,7 +5,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/example/user-service/internal/service"
+	"github.com/example/user-service/internal/usecase"
 	res "github.com/example/user-service/pkg/http"
 )
 

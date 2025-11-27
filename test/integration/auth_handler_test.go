@@ -11,9 +11,9 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/example/user-service/internal/adapter/http/handlers"
 	"github.com/example/user-service/internal/domain"
-	"github.com/example/user-service/internal/ports/http/handlers"
-	"github.com/example/user-service/internal/service"
+	"github.com/example/user-service/internal/usecase"
 )
 
 type authServiceStub struct {
