@@ -37,7 +37,7 @@ func TestAuthFlow_ExpiredAccessTokenAndRefresh(t *testing.T) {
 	require.NotNil(t, tokens)
 
 	e := echo.New()
-	mw := authmw.NewAuthMiddleware(cfg, pkglog.New("test"), nil)
+	mw := authmw.NewAuthMiddleware(cfg, pkglog.New("test"), nil, users, nil)
 	e.GET("/protected", func(c echo.Context) error {
 		return c.String(http.StatusOK, "ok")
 	}, mw.Handler)

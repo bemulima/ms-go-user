@@ -25,8 +25,8 @@ type Config struct {
 	JWTSecret            string        `env:"JWT_SECRET"`
 	JWTPrivateKey        string        `env:"JWT_PRIVATE_KEY"`
 	JWTPublicKey         string        `env:"JWT_PUBLIC_KEY"`
-	JWTTTLMinutes        time.Duration `env:"JWT_TTL_MINUTES" envDefault:"60"`
-	JWTRefreshTTLMinutes time.Duration `env:"JWT_REFRESH_TTL_MINUTES" envDefault:"43200"`
+	JWTTTLMinutes        time.Duration `env:"JWT_TTL_MINUTES" envDefault:"60m"`
+	JWTRefreshTTLMinutes time.Duration `env:"JWT_REFRESH_TTL_MINUTES" envDefault:"43200m"`
 	JWTIssuer            string        `env:"JWT_ISSUER" envDefault:"user-service"`
 	JWTAudience          string        `env:"JWT_AUDIENCE" envDefault:"frontend"`
 
@@ -61,7 +61,6 @@ func Load() (*Config, error) {
 	if err := env.Parse(cfg); err != nil {
 		return nil, err
 	}
-	normalizeDurations(cfg)
 	return cfg, nil
 }
 
@@ -71,9 +70,4 @@ func MustLoad() *Config {
 		log.Fatalf("failed to load config: %v", err)
 	}
 	return cfg
-}
-
-func normalizeDurations(cfg *Config) {
-	cfg.JWTTTLMinutes = cfg.JWTTTLMinutes * time.Minute
-	cfg.JWTRefreshTTLMinutes = cfg.JWTRefreshTTLMinutes * time.Minute
 }
