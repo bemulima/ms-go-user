@@ -29,6 +29,7 @@ type Config struct {
 	JWTRefreshTTLMinutes time.Duration `env:"JWT_REFRESH_TTL_MINUTES" envDefault:"43200m"`
 	JWTIssuer            string        `env:"JWT_ISSUER" envDefault:"user-service"`
 	JWTAudience          string        `env:"JWT_AUDIENCE" envDefault:"frontend"`
+	NATSAuthVerify       string        `env:"NATS_SUBJECT_AUTH_VERIFY" envDefault:"auth.verifyJWT"`
 
 	GoogleClientID     string `env:"GOOGLE_CLIENT_ID"`
 	GoogleClientSecret string `env:"GOOGLE_CLIENT_SECRET"`
@@ -48,6 +49,7 @@ type Config struct {
 
 	MessageBroker    string `env:"MESSAGE_BROKER" envDefault:"rabbitmq"`
 	NATSURL          string `env:"NATS_URL" envDefault:"nats://localhost:4222"`
+	NATSUserCreate   string `env:"NATS_SUBJECT_USER_CREATE" envDefault:"user.create-user"`
 	RabbitMQURL      string `env:"RABBITMQ_URL" envDefault:"amqp://guest:guest@localhost:5672/"`
 	RabbitMQExchange string `env:"RABBITMQ_EXCHANGE" envDefault:"users"`
 

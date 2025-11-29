@@ -86,16 +86,9 @@ func New(ctx context.Context) (*App, error) {
 	profileRepo := repo.NewUserProfileRepository(db)
 	providerRepo := repo.NewUserProviderRepository(db)
 	identityRepo := repo.NewUserIdentityRepository(db)
-	signer, err := service.NewJWTSigner(cfg)
-	if err != nil {
-		return nil, err
-	}
-	avatarIngestor := service.NewAvatarIngestor(filestorageClient, logger)
-	authService := service.NewAuthService(cfg, logger, userRepo, profileRepo, providerRepo, tarantoolClient, rbacClient, publisher, signer, avatarIngestor)
 	userService := service.NewUserService(userRepo, profileRepo, identityRepo, tarantoolClient)
 	manageService := service.NewUserManageService(userRepo, profileRepo, rbacClient)
 
-	authHandler := handlers.NewAuthHandler(authService)
 	var imageProcClient imageprocessor.Client
 	if cfg.ImageProcessorURL != "" {
 		imageProcClient = imageprocessor.NewHTTPClient(cfg.ImageProcessorURL, 10*time.Second)
@@ -108,17 +101,13 @@ func New(ctx context.Context) (*App, error) {
 	rbacMW := mw.NewRBACMiddleware(rbacClient)
 
 	e := echo.New()
-	router := httpport.NewRouter(cfg, authHandler, userHandler, manageHandler, authMW, rbacMW)
+	router := httpport.NewRouter(cfg, userHandler, manageHandler, authMW, rbacMW)
 	router.Setup(e)
 
 	if natsConn != nil {
 		rpc := natsadapter.Server{Conn: natsConn}
-		authRPC, err := natsadapter.NewAuthHandler(cfg, natsConn, "rbac.checkRole")
-		if err == nil {
-			_ = rpc.Subscribe("user.verifyJWT", "ms-go-user", authRPC.Handle)
-		} else {
-			log.Printf("nats auth handler init failed: %v", err)
-		}
+		createHandler := natsadapter.NewCreateUserHandler(userRepo, profileRepo)
+		_ = rpc.Subscribe(cfg.NATSUserCreate, "ms-go-user", createHandler.Handle)
 	}
 
 	return &App{cfg: cfg, logger: logger, db: db, publisher: publisher, echo: e, natsConn: natsConn}, nil

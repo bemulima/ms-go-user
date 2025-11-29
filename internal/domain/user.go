@@ -8,6 +8,7 @@ import (
 type UserStatus string
 
 const (
+	UserStatusNew      UserStatus = "NEW_USER"
 	UserStatusActive   UserStatus = "ACTIVE"
 	UserStatusInactive UserStatus = "INACTIVE"
 	UserStatusBlocked  UserStatus = "BLOCKED"
@@ -16,8 +17,8 @@ const (
 type User struct {
 	ID           string     `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
 	Email        string     `gorm:"uniqueIndex;not null" json:"email"`
-	PasswordHash *string    `gorm:"column:password_hash" json:"-"`
-	Status       UserStatus `gorm:"column:status;type:text;default:ACTIVE" json:"status"`
+	PasswordHash *string    `gorm:"-" json:"-"`
+	Status       UserStatus `gorm:"column:status;type:text;default:NEW_USER" json:"status"`
 	IsActive     bool       `gorm:"column:is_active;default:true" json:"is_active"`
 	CreatedAt    time.Time  `gorm:"column:created_at;autoCreateTime" json:"created_at"`
 	UpdatedAt    time.Time  `gorm:"column:updated_at;autoUpdateTime" json:"updated_at"`
@@ -29,15 +30,15 @@ func (User) TableName() string {
 }
 
 func (u *User) HasPassword() bool {
-	return u.PasswordHash != nil && *u.PasswordHash != ""
+	return false
 }
 
 func (u *User) SetPasswordHash(hash string) {
-	u.PasswordHash = &hash
+	// password hash is managed by ms-go-auth
 }
 
 func (s UserStatus) IsValid() bool {
-	return s == UserStatusActive || s == UserStatusInactive || s == UserStatusBlocked
+	return s == UserStatusActive || s == UserStatusInactive || s == UserStatusBlocked || s == UserStatusNew
 }
 
 func (u *User) SetStatus(status UserStatus) error {
@@ -45,7 +46,7 @@ func (u *User) SetStatus(status UserStatus) error {
 		return fmt.Errorf("invalid user status")
 	}
 	u.Status = status
-	u.IsActive = status == UserStatusActive
+	u.IsActive = status == UserStatusActive || status == UserStatusNew
 	return nil
 }
 
@@ -54,7 +55,7 @@ func (u *User) StatusOrDefault() UserStatus {
 		return u.Status
 	}
 	if u.IsActive {
-		return UserStatusActive
+		return UserStatusNew
 	}
 	return UserStatusInactive
 }

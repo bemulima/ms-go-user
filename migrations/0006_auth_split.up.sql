@@ -1,0 +1,5 @@
+ALTER TABLE "user" DROP COLUMN IF EXISTS password_hash;
+ALTER TABLE "user" ALTER COLUMN email DROP NOT NULL;
+ALTER TABLE "user" DROP CONSTRAINT IF EXISTS user_email_key;
+ALTER TABLE "user" ALTER COLUMN status SET DEFAULT 'NEW_USER';
+UPDATE "user" SET status = 'NEW_USER' WHERE status IS NULL OR status = '';

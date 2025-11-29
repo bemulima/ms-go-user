@@ -14,15 +14,14 @@ import (
 
 type Router struct {
 	cfg           *config.Config
-	authHandler   *handlers.AuthHandler
 	userHandler   *handlers.UserHandler
 	manageHandler *handlers.UserManageHandler
 	authMW        *authmw.AuthMiddleware
 	rbacMW        *authmw.RBACMiddleware
 }
 
-func NewRouter(cfg *config.Config, authHandler *handlers.AuthHandler, userHandler *handlers.UserHandler, manageHandler *handlers.UserManageHandler, authMW *authmw.AuthMiddleware, rbacMW *authmw.RBACMiddleware) *Router {
-	return &Router{cfg: cfg, authHandler: authHandler, userHandler: userHandler, manageHandler: manageHandler, authMW: authMW, rbacMW: rbacMW}
+func NewRouter(cfg *config.Config, userHandler *handlers.UserHandler, manageHandler *handlers.UserManageHandler, authMW *authmw.AuthMiddleware, rbacMW *authmw.RBACMiddleware) *Router {
+	return &Router{cfg: cfg, userHandler: userHandler, manageHandler: manageHandler, authMW: authMW, rbacMW: rbacMW}
 }
 
 func (r *Router) Setup(e *echo.Echo) {
@@ -38,9 +37,6 @@ func (r *Router) Setup(e *echo.Echo) {
 	e.GET("/health", func(c echo.Context) error {
 		return res.JSON(c, http.StatusOK, map[string]string{"status": "ok"})
 	})
-
-	authGroup := e.Group("/auth")
-	r.authHandler.RegisterRoutes(authGroup)
 
 	userGroup := e.Group("/users", r.authMW.Handler)
 	r.userHandler.RegisterRoutes(userGroup)
