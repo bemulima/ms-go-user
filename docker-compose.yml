@@ -2,6 +2,7 @@ version: "3.9"
 
 services:
   user-service:
+    container_name: ms-user-service
     build:
       context: .
       dockerfile: build/docker/Dockerfile
@@ -17,7 +18,8 @@ services:
       - ms-user-service
 
   postgres:
-    image: postgres:15-alpine
+    container_name: ms-user-postgres
+    image: postgres:16-alpine
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -28,6 +30,7 @@ services:
       - ms-user-service
 
   rabbitmq:
+    container_name: ms-user-rabbitmq
     image: rabbitmq:3.12-management-alpine
     ports:
       - "5672:5672"
@@ -36,6 +39,7 @@ services:
       - ms-user-service
 
   nats:
+    container_name: ms-user-nats
     image: nats:2.10-alpine
     command: ["-js"]
     ports:
@@ -45,6 +49,7 @@ services:
       - ms-user-service
 
   nginx:
+    container_name: ms-user-nginx
     image: nginx:1.25-alpine
     depends_on:
       - user-service
