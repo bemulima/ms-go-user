@@ -12,8 +12,8 @@ import (
 	nats "github.com/nats-io/nats.go"
 
 	"github.com/example/user-service/config"
-	repo "github.com/example/user-service/internal/adapter/postgres"
-	rbacclient "github.com/example/user-service/internal/adapter/rbac"
+	repo "github.com/example/user-service/internal/adapters/postgres"
+	rbacclient "github.com/example/user-service/internal/adapters/rbac"
 	res "github.com/example/user-service/pkg/http"
 	pkglog "github.com/example/user-service/pkg/log"
 )
@@ -36,21 +36,21 @@ func (a *AuthMiddleware) Handler(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		header := c.Request().Header.Get(echo.HeaderAuthorization)
 		if header == "" {
-			return res.ErrorJSON(c, http.StatusUnauthorized, "unauthorized", "missing token", requestIDFromCtx(c), nil)
+			return res.ErrorJSON(c, http.StatusUnauthorized, "unauthorized", "missing token", RequestIDFromCtx(c), nil)
 		}
 		parts := strings.SplitN(header, " ", 2)
 		if len(parts) != 2 || !strings.EqualFold(parts[0], "bearer") {
-			return res.ErrorJSON(c, http.StatusUnauthorized, "unauthorized", "invalid token", requestIDFromCtx(c), nil)
+			return res.ErrorJSON(c, http.StatusUnauthorized, "unauthorized", "invalid token", RequestIDFromCtx(c), nil)
 		}
 
 		userID, role, email, err := a.verifyWithAuthService(c.Request().Context(), parts[1])
 		if err != nil {
-			return res.ErrorJSON(c, http.StatusUnauthorized, "unauthorized", err.Error(), requestIDFromCtx(c), nil)
+			return res.ErrorJSON(c, http.StatusUnauthorized, "unauthorized", err.Error(), RequestIDFromCtx(c), nil)
 		}
 
 		user, err := a.users.FindByID(c.Request().Context(), userID)
 		if err != nil || user == nil {
-			return res.ErrorJSON(c, http.StatusUnauthorized, "unauthorized", "user not found", requestIDFromCtx(c), nil)
+			return res.ErrorJSON(c, http.StatusUnauthorized, "unauthorized", "user not found", RequestIDFromCtx(c), nil)
 		}
 		c.Set("user", user)
 		c.Set("email", email)
@@ -58,10 +58,10 @@ func (a *AuthMiddleware) Handler(next echo.HandlerFunc) echo.HandlerFunc {
 		if a.nats != nil {
 			allowed, err := a.checkRole(c.Request().Context(), userID, role)
 			if err != nil {
-				return res.ErrorJSON(c, http.StatusForbidden, "forbidden", err.Error(), requestIDFromCtx(c), nil)
+				return res.ErrorJSON(c, http.StatusForbidden, "forbidden", err.Error(), RequestIDFromCtx(c), nil)
 			}
 			if !allowed {
-				return res.ErrorJSON(c, http.StatusForbidden, "forbidden", "role not allowed", requestIDFromCtx(c), nil)
+				return res.ErrorJSON(c, http.StatusForbidden, "forbidden", "role not allowed", RequestIDFromCtx(c), nil)
 			}
 		}
 

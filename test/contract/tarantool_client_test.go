@@ -10,7 +10,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/example/user-service/internal/adapter/tarantool"
+	"github.com/example/user-service/internal/adapters/tarantool"
 )
 
 const (

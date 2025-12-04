@@ -45,13 +45,13 @@ cmd/                          # main entrypoint
 config/                       # environment configuration loading
 internal/domain/              # domain entities and value objects
 internal/usecase/             # business logic (auth, user, manage)
-internal/adapter/http/        # Echo router, handlers, middleware
-internal/adapter/postgres/    # GORM repositories
-internal/adapter/{rbac,broker,filestorage,imageprocessor,tarantool}/ # external clients
+internal/adapters/http/        # Echo router, handlers, middleware
+internal/adapters/postgres/    # GORM repositories
+internal/adapters/{rbac,broker,filestorage,imageprocessor,tarantool}/ # external clients
 internal/app/                 # composition root / DI
 pkg/                          # shared utility packages (logging, HTTP helpers)
 migrations/                   # database migrations
 test/                         # unit and integration tests
 ```
 
-Layering rules: `usecase` depends only on `domain` + `port`-like interfaces; adapters implement those interfaces and are wired in `app`. HTTP and broker transports stay under `internal/adapter`.
+Layering rules: `usecase` depends only on `domain` + `port`-like interfaces; adapters implement those interfaces and are wired in `app`. HTTP and broker transports stay under `internal/adapters`.

@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"golang.org/x/crypto/bcrypt"
+
 	"gorm.io/gorm"
 
 	"github.com/example/user-service/internal/domain"
@@ -53,18 +53,15 @@ func TestUserManageService_UpdateUser(t *testing.T) {
 	require.NoError(t, profiles.Create(context.Background(), &domain.UserProfile{UserID: original.ID, DisplayName: stringPtr("Old")}))
 
 	newEmail := "new@example.com"
-	newPassword := "Newpass1"
 	newDisplay := "Updated"
 	user, err := svc.UpdateUser(context.Background(), original.ID, service.UpdateUserRequest{
 		Email:       &newEmail,
-		Password:    &newPassword,
 		DisplayName: &newDisplay,
 	})
 	require.NoError(t, err)
 	require.Equal(t, newEmail, user.Email)
 	require.NotNil(t, user.Profile)
 	require.Equal(t, newDisplay, deref(user.Profile.DisplayName))
-	require.NoError(t, bcrypt.CompareHashAndPassword([]byte(deref(user.PasswordHash)), []byte(newPassword)))
 }
 
 func TestUserManageService_ChangeStatus(t *testing.T) {

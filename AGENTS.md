@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 - `cmd/user-service` boots the app, `config` wires environment variables, and `internal/app` composes dependencies for helpers in `pkg/`.
-- Keep domain models in `internal/domain`, services in `internal/usecase`, repositories in `internal/adapter/postgres`, and adapters (HTTP, OAuth, brokers) in `internal/adapter`.
+- Keep domain models in `internal/domain`, services in `internal/usecase`, repositories in `internal/adapters/postgres`, and adapters (HTTP, OAuth, brokers) in `internal/adapters`.
 - Tests live beside their packages and in `test/` for fixture-heavy suites; migrations belong in `migrations/`, Docker setup in `docker-compose.yml`, and Go modules at the repo root.
 
 ## Build, Test, and Development Commands

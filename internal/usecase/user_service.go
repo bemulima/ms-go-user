@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/example/user-service/internal/adapter/postgres"
-	"github.com/example/user-service/internal/adapter/tarantool"
+	"github.com/example/user-service/internal/adapters/postgres"
+	"github.com/example/user-service/internal/adapters/tarantool"
 	"github.com/example/user-service/internal/domain"
 )
 

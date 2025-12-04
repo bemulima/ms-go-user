@@ -16,16 +16,17 @@ import (
 	"gorm.io/gorm/schema"
 
 	"github.com/example/user-service/config"
-	"github.com/example/user-service/internal/adapter/broker"
-	"github.com/example/user-service/internal/adapter/filestorage"
-	httpport "github.com/example/user-service/internal/adapter/http"
-	"github.com/example/user-service/internal/adapter/http/handlers"
-	mw "github.com/example/user-service/internal/adapter/http/middleware"
-	"github.com/example/user-service/internal/adapter/imageprocessor"
-	natsadapter "github.com/example/user-service/internal/adapter/nats"
-	"github.com/example/user-service/internal/adapter/postgres"
-	rbacclient "github.com/example/user-service/internal/adapter/rbac"
-	"github.com/example/user-service/internal/adapter/tarantool"
+	"github.com/example/user-service/internal/adapters/broker"
+	"github.com/example/user-service/internal/adapters/filestorage"
+	httpadapter "github.com/example/user-service/internal/adapters/http"
+	adminv1 "github.com/example/user-service/internal/adapters/http/admin/v1"
+	apiv1 "github.com/example/user-service/internal/adapters/http/api/v1"
+	mw "github.com/example/user-service/internal/adapters/http/middleware"
+	"github.com/example/user-service/internal/adapters/imageprocessor"
+	natsadapter "github.com/example/user-service/internal/adapters/nats"
+	repo "github.com/example/user-service/internal/adapters/postgres"
+	rbacclient "github.com/example/user-service/internal/adapters/rbac"
+	"github.com/example/user-service/internal/adapters/tarantool"
 	"github.com/example/user-service/internal/usecase"
 	pkglog "github.com/example/user-service/pkg/log"
 )
@@ -84,7 +85,7 @@ func New(ctx context.Context) (*App, error) {
 
 	userRepo := repo.NewUserRepository(db)
 	profileRepo := repo.NewUserProfileRepository(db)
-	providerRepo := repo.NewUserProviderRepository(db)
+	_ = repo.NewUserProviderRepository(db)
 	identityRepo := repo.NewUserIdentityRepository(db)
 	userService := service.NewUserService(userRepo, profileRepo, identityRepo, tarantoolClient)
 	manageService := service.NewUserManageService(userRepo, profileRepo, rbacClient)
@@ -94,14 +95,14 @@ func New(ctx context.Context) (*App, error) {
 		imageProcClient = imageprocessor.NewHTTPClient(cfg.ImageProcessorURL, 10*time.Second)
 	}
 
-	userHandler := handlers.NewUserHandler(userService, filestorageClient, imageProcClient, cfg.AvatarPresetGroup, cfg.AvatarFileKind)
-	manageHandler := handlers.NewUserManageHandler(manageService)
+	apiHandler := apiv1.NewHandler(userService, filestorageClient, imageProcClient, cfg.AvatarPresetGroup, cfg.AvatarFileKind)
+	adminHandler := adminv1.NewHandler(manageService)
 
 	authMW := mw.NewAuthMiddleware(cfg, logger, rbacClient, userRepo, natsConn)
 	rbacMW := mw.NewRBACMiddleware(rbacClient)
 
 	e := echo.New()
-	router := httpport.NewRouter(cfg, userHandler, manageHandler, authMW, rbacMW)
+	router := httpadapter.NewRouter(cfg, apiHandler, adminHandler, authMW, rbacMW)
 	router.Setup(e)
 
 	if natsConn != nil {

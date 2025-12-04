@@ -9,8 +9,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 
-	"github.com/example/user-service/internal/adapter/postgres"
-	"github.com/example/user-service/internal/adapter/rbac"
+	"github.com/example/user-service/internal/adapters/postgres"
+	"github.com/example/user-service/internal/adapters/rbac"
 	"github.com/example/user-service/internal/domain"
 )
 
@@ -187,4 +187,19 @@ func (s *userManageService) ChangeRole(ctx context.Context, userID, role string)
 		return err
 	}
 	return s.rbac.AssignRole(ctx, userID, role)
+}
+
+func validateEmail(email string) error {
+	email = strings.TrimSpace(email)
+	if email == "" || !strings.Contains(email, "@") {
+		return fmt.Errorf("invalid email")
+	}
+	return nil
+}
+
+func validatePassword(pwd string) error {
+	if len(pwd) < 6 {
+		return fmt.Errorf("password too short")
+	}
+	return nil
 }

@@ -6,7 +6,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	rbacclient "github.com/example/user-service/internal/adapter/rbac"
+	rbacclient "github.com/example/user-service/internal/adapters/rbac"
 	res "github.com/example/user-service/pkg/http"
 )
 
@@ -37,7 +37,7 @@ func (m *RBACMiddleware) requireRoles(roles []string) echo.MiddlewareFunc {
 		return func(c echo.Context) error {
 			userID, _ := c.Get("user_id").(string)
 			if userID == "" {
-				return res.ErrorJSON(c, http.StatusForbidden, "forbidden", "missing user", requestIDFromCtx(c), nil)
+				return res.ErrorJSON(c, http.StatusForbidden, "forbidden", "missing user", RequestIDFromCtx(c), nil)
 			}
 			allowed := false
 			if cached, ok := c.Get("role").(string); ok {
@@ -69,7 +69,7 @@ func (m *RBACMiddleware) requireRoles(roles []string) echo.MiddlewareFunc {
 				}
 			}
 			if !allowed {
-				return res.ErrorJSON(c, http.StatusForbidden, "forbidden", "role required", requestIDFromCtx(c), nil)
+				return res.ErrorJSON(c, http.StatusForbidden, "forbidden", "role required", RequestIDFromCtx(c), nil)
 			}
 			return next(c)
 		}
@@ -81,7 +81,7 @@ func (m *RBACMiddleware) RequirePermission(permission string) echo.MiddlewareFun
 		return func(c echo.Context) error {
 			userID, _ := c.Get("user_id").(string)
 			if userID == "" {
-				return res.ErrorJSON(c, http.StatusForbidden, "forbidden", "missing user", requestIDFromCtx(c), nil)
+				return res.ErrorJSON(c, http.StatusForbidden, "forbidden", "missing user", RequestIDFromCtx(c), nil)
 			}
 			allowed := false
 			if cached, ok := c.Get("permissions").([]string); ok {
@@ -99,7 +99,7 @@ func (m *RBACMiddleware) RequirePermission(permission string) echo.MiddlewareFun
 				}
 			}
 			if !allowed {
-				return res.ErrorJSON(c, http.StatusForbidden, "forbidden", "permission required", requestIDFromCtx(c), nil)
+				return res.ErrorJSON(c, http.StatusForbidden, "forbidden", "permission required", RequestIDFromCtx(c), nil)
 			}
 			return next(c)
 		}

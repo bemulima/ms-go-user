@@ -8,7 +8,7 @@ import (
 	natsgo "github.com/nats-io/nats.go"
 	"gorm.io/gorm"
 
-	repo "github.com/example/user-service/internal/adapter/postgres"
+	repo "github.com/example/user-service/internal/adapters/postgres"
 	"github.com/example/user-service/internal/domain"
 )
 

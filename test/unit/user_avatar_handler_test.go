@@ -12,8 +12,8 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/require"
 
-	"github.com/example/user-service/internal/adapter/filestorage"
-	"github.com/example/user-service/internal/adapter/http/handlers"
+	"github.com/example/user-service/internal/adapters/filestorage"
+	"github.com/example/user-service/internal/adapters/http/api/v1"
 	"github.com/example/user-service/internal/domain"
 )
 
@@ -29,7 +29,7 @@ func TestUploadAvatar_Success(t *testing.T) {
 			return &domain.UserProfile{UserID: userID, AvatarURL: avatarURL}, nil
 		},
 	}
-	handler := handlers.NewUserHandler(us, fs, nil, "avatar", "USER_MEDIA")
+	handler := v1.NewHandler(us, fs, nil, "avatar", "USER_MEDIA")
 
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
@@ -64,7 +64,7 @@ func TestUploadAvatar_TooLarge(t *testing.T) {
 
 	fs := &stubFilestorage{}
 	us := &stubUserService{}
-	handler := handlers.NewUserHandler(us, fs, nil, "avatar", "USER_MEDIA")
+	handler := v1.NewHandler(us, fs, nil, "avatar", "USER_MEDIA")
 
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
@@ -90,7 +90,7 @@ func TestUploadAvatar_EagerTriggersImageProcessor(t *testing.T) {
 	fs := &stubFilestorage{}
 	proc := &stubImageProc{}
 	us := &stubUserService{}
-	handler := handlers.NewUserHandler(us, fs, proc, "avatar", "USER_MEDIA")
+	handler := v1.NewHandler(us, fs, proc, "avatar", "USER_MEDIA")
 
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)

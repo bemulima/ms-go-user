@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/example/user-service/internal/adapter/tarantool"
+	"github.com/example/user-service/internal/adapters/tarantool"
 	"github.com/example/user-service/internal/domain"
 	"github.com/example/user-service/internal/usecase"
 )
