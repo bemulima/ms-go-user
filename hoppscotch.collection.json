@@ -1,0 +1,420 @@
+{
+  "name": "ms-go-user (direct)",
+  "v": 1,
+  "folders": [],
+  "requests": [
+    {
+      "v": "1",
+      "name": "Get me",
+      "method": "GET",
+      "endpoint": "<<USER_BASE_URL>>/api/v1/users/me",
+      "params": [],
+      "headers": [
+        {
+          "key": "Authorization",
+          "value": "Bearer <<ACCESS_TOKEN>>"
+        },
+        {
+          "key": "Accept-Language",
+          "value": "<<LANGUAGE>>"
+        }
+      ],
+      "auth": {
+        "authType": "inherit",
+        "authActive": true
+      },
+      "preRequestScript": "",
+      "testScript": "",
+      "body": {
+        "contentType": "application/json",
+        "body": ""
+      },
+      "requestVariables": [],
+      "responses": {}
+    },
+    {
+      "v": "1",
+      "name": "Get by id",
+      "method": "GET",
+      "endpoint": "<<USER_BASE_URL>>/api/v1/users/:id",
+      "params": [],
+      "headers": [
+        {
+          "key": "Authorization",
+          "value": "Bearer <<ACCESS_TOKEN>>"
+        },
+        {
+          "key": "Accept-Language",
+          "value": "<<LANGUAGE>>"
+        }
+      ],
+      "auth": {
+        "authType": "inherit",
+        "authActive": true
+      },
+      "preRequestScript": "",
+      "testScript": "",
+      "body": {
+        "contentType": "application/json",
+        "body": ""
+      },
+      "requestVariables": [],
+      "responses": {}
+    },
+    {
+      "v": "1",
+      "name": "Update profile",
+      "method": "PATCH",
+      "endpoint": "<<USER_BASE_URL>>/api/v1/users/me",
+      "params": [],
+      "headers": [
+        {
+          "key": "Authorization",
+          "value": "Bearer <<ACCESS_TOKEN>>"
+        },
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "key": "Accept-Language",
+          "value": "<<LANGUAGE>>"
+        }
+      ],
+      "auth": {
+        "authType": "inherit",
+        "authActive": true
+      },
+      "preRequestScript": "",
+      "testScript": "",
+      "body": {
+        "contentType": "application/json",
+        "body": "{\n  \"display_name\": \"User\",\n  \"avatar_url\": \"https://example.com/avatar.png\"\n}"
+      },
+      "requestVariables": [],
+      "responses": {}
+    },
+    {
+      "v": "1",
+      "name": "Upload avatar",
+      "method": "POST",
+      "endpoint": "<<USER_BASE_URL>>/api/v1/users/me/avatar",
+      "params": [],
+      "headers": [
+        {
+          "key": "Authorization",
+          "value": "Bearer <<ACCESS_TOKEN>>"
+        },
+        {
+          "key": "Content-Type",
+          "value": "multipart/form-data"
+        },
+        {
+          "key": "Accept-Language",
+          "value": "<<LANGUAGE>>"
+        }
+      ],
+      "auth": {
+        "authType": "inherit",
+        "authActive": true
+      },
+      "preRequestScript": "",
+      "testScript": "",
+      "body": {
+        "contentType": "multipart/form-data",
+        "body": "{\n  \"file\": \"(file)\",\n  \"processing_mode\": \"DISABLED\"\n}"
+      },
+      "requestVariables": [],
+      "responses": {}
+    },
+    {
+      "v": "1",
+      "name": "Change email start",
+      "method": "POST",
+      "endpoint": "<<USER_BASE_URL>>/api/v1/users/me/change-email/start",
+      "params": [],
+      "headers": [
+        {
+          "key": "Authorization",
+          "value": "Bearer <<ACCESS_TOKEN>>"
+        },
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "key": "Accept-Language",
+          "value": "<<LANGUAGE>>"
+        }
+      ],
+      "auth": {
+        "authType": "inherit",
+        "authActive": true
+      },
+      "preRequestScript": "",
+      "testScript": "",
+      "body": {
+        "contentType": "application/json",
+        "body": "{\n  \"new_email\": \"new@example.com\"\n}"
+      },
+      "requestVariables": [],
+      "responses": {}
+    },
+    {
+      "v": "1",
+      "name": "Change email verify",
+      "method": "POST",
+      "endpoint": "<<USER_BASE_URL>>/api/v1/users/me/change-email/verify",
+      "params": [],
+      "headers": [
+        {
+          "key": "Authorization",
+          "value": "Bearer <<ACCESS_TOKEN>>"
+        },
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "key": "Accept-Language",
+          "value": "<<LANGUAGE>>"
+        }
+      ],
+      "auth": {
+        "authType": "inherit",
+        "authActive": true
+      },
+      "preRequestScript": "",
+      "testScript": "",
+      "body": {
+        "contentType": "application/json",
+        "body": "{\n  \"uuid\": \"token\",\n  \"code\": \"123456\"\n}"
+      },
+      "requestVariables": [],
+      "responses": {}
+    },
+    {
+      "v": "1",
+      "name": "Attach identity",
+      "method": "POST",
+      "endpoint": "<<USER_BASE_URL>>/api/v1/users/me/identities",
+      "params": [],
+      "headers": [
+        {
+          "key": "Authorization",
+          "value": "Bearer <<ACCESS_TOKEN>>"
+        },
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "key": "Accept-Language",
+          "value": "<<LANGUAGE>>"
+        }
+      ],
+      "auth": {
+        "authType": "inherit",
+        "authActive": true
+      },
+      "preRequestScript": "",
+      "testScript": "",
+      "body": {
+        "contentType": "application/json",
+        "body": "{\n  \"provider\": \"github\",\n  \"provider_user_id\": \"123\",\n  \"email\": \"user@example.com\",\n  \"display_name\": \"Octo\",\n  \"avatar_url\": \"https://example.com/avatar.png\"\n}"
+      },
+      "requestVariables": [],
+      "responses": {}
+    },
+    {
+      "v": "1",
+      "name": "Remove identity",
+      "method": "DELETE",
+      "endpoint": "<<USER_BASE_URL>>/api/v1/users/me/identities/:provider/:provider_user_id",
+      "params": [],
+      "headers": [
+        {
+          "key": "Authorization",
+          "value": "Bearer <<ACCESS_TOKEN>>"
+        },
+        {
+          "key": "Accept-Language",
+          "value": "<<LANGUAGE>>"
+        }
+      ],
+      "auth": {
+        "authType": "inherit",
+        "authActive": true
+      },
+      "preRequestScript": "",
+      "testScript": "",
+      "body": {
+        "contentType": "application/json",
+        "body": ""
+      },
+      "requestVariables": [],
+      "responses": {}
+    },
+    {
+      "v": "1",
+      "name": "Admin create user",
+      "method": "POST",
+      "endpoint": "<<USER_BASE_URL>>/admin/v1/users",
+      "params": [],
+      "headers": [
+        {
+          "key": "Authorization",
+          "value": "Bearer <<ACCESS_TOKEN>>"
+        },
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "auth": {
+        "authType": "inherit",
+        "authActive": true
+      },
+      "preRequestScript": "",
+      "testScript": "",
+      "body": {
+        "contentType": "application/json",
+        "body": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"secret\",\n  \"display_name\": \"User\",\n  \"avatar_url\": \"https://example.com/avatar.png\",\n  \"role\": \"student\",\n  \"status\": \"ACTIVE\"\n}"
+      },
+      "requestVariables": [],
+      "responses": {}
+    },
+    {
+      "v": "1",
+      "name": "Admin update user",
+      "method": "PATCH",
+      "endpoint": "<<USER_BASE_URL>>/admin/v1/users/:id",
+      "params": [],
+      "headers": [
+        {
+          "key": "Authorization",
+          "value": "Bearer <<ACCESS_TOKEN>>"
+        },
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "auth": {
+        "authType": "inherit",
+        "authActive": true
+      },
+      "preRequestScript": "",
+      "testScript": "",
+      "body": {
+        "contentType": "application/json",
+        "body": "{\n  \"email\": \"new@example.com\",\n  \"password\": \"newpass\",\n  \"display_name\": \"Updated\",\n  \"avatar_url\": \"https://example.com/avatar.png\"\n}"
+      },
+      "requestVariables": [],
+      "responses": {}
+    },
+    {
+      "v": "1",
+      "name": "Admin change status",
+      "method": "PATCH",
+      "endpoint": "<<USER_BASE_URL>>/admin/v1/users/:id/status",
+      "params": [],
+      "headers": [
+        {
+          "key": "Authorization",
+          "value": "Bearer <<ACCESS_TOKEN>>"
+        },
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "auth": {
+        "authType": "inherit",
+        "authActive": true
+      },
+      "preRequestScript": "",
+      "testScript": "",
+      "body": {
+        "contentType": "application/json",
+        "body": "{\n  \"status\": \"BLOCKED\"\n}"
+      },
+      "requestVariables": [],
+      "responses": {}
+    },
+    {
+      "v": "1",
+      "name": "Admin change role",
+      "method": "PATCH",
+      "endpoint": "<<USER_BASE_URL>>/admin/v1/users/:id/role",
+      "params": [],
+      "headers": [
+        {
+          "key": "Authorization",
+          "value": "Bearer <<ACCESS_TOKEN>>"
+        },
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "auth": {
+        "authType": "inherit",
+        "authActive": true
+      },
+      "preRequestScript": "",
+      "testScript": "",
+      "body": {
+        "contentType": "application/json",
+        "body": "{\n  \"role\": \"admin\"\n}"
+      },
+      "requestVariables": [],
+      "responses": {}
+    },
+    {
+      "v": "1",
+      "name": "Admin get user",
+      "method": "GET",
+      "endpoint": "<<USER_BASE_URL>>/admin/v1/users/:id",
+      "params": [],
+      "headers": [
+        {
+          "key": "Authorization",
+          "value": "Bearer <<ACCESS_TOKEN>>"
+        }
+      ],
+      "auth": {
+        "authType": "inherit",
+        "authActive": true
+      },
+      "preRequestScript": "",
+      "testScript": "",
+      "body": {
+        "contentType": "application/json",
+        "body": ""
+      },
+      "requestVariables": [],
+      "responses": {}
+    },
+    {
+      "v": "1",
+      "name": "Health",
+      "method": "GET",
+      "endpoint": "<<USER_BASE_URL>>/internal/health",
+      "params": [],
+      "headers": [],
+      "auth": {
+        "authType": "inherit",
+        "authActive": true
+      },
+      "preRequestScript": "",
+      "testScript": "",
+      "body": {
+        "contentType": "application/json",
+        "body": ""
+      },
+      "requestVariables": [],
+      "responses": {}
+    }
+  ]
+}
