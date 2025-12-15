@@ -32,15 +32,6 @@ type updateProfileRequest struct {
 	AvatarURL   *string `json:"avatar_url"`
 }
 
-type changeEmailStartRequest struct {
-	NewEmail string `json:"new_email"`
-}
-
-type changeEmailVerifyRequest struct {
-	UUID string `json:"uuid"`
-	Code string `json:"code"`
-}
-
 type attachIdentityRequest struct {
 	Provider       string  `json:"provider"`
 	ProviderUserID string  `json:"provider_user_id"`
@@ -54,8 +45,6 @@ func (h *Handler) RegisterRoutes(g *echo.Group) {
 	g.GET("/:id", h.GetByID)
 	g.PATCH("/me", h.UpdateProfile)
 	g.POST("/me/avatar", h.UploadAvatar)
-	g.POST("/me/change-email/start", h.StartChangeEmail)
-	g.POST("/me/change-email/verify", h.VerifyChangeEmail)
 	g.POST("/me/identities", h.AttachIdentity)
 	g.DELETE("/me/identities/:provider/:provider_user_id", h.RemoveIdentity)
 }
@@ -90,32 +79,6 @@ func (h *Handler) UpdateProfile(c echo.Context) error {
 		return res.ErrorJSON(c, http.StatusInternalServerError, "update_failed", err.Error(), middleware.RequestIDFromCtx(c), nil)
 	}
 	return res.JSON(c, http.StatusOK, profile)
-}
-
-func (h *Handler) StartChangeEmail(c echo.Context) error {
-	req := new(changeEmailStartRequest)
-	if err := c.Bind(req); err != nil {
-		return res.ErrorJSON(c, http.StatusBadRequest, "bad_request", "invalid payload", middleware.RequestIDFromCtx(c), nil)
-	}
-	userID := c.Get("user_id").(string)
-	uuid, err := h.users.StartEmailChange(c.Request().Context(), userID, req.NewEmail)
-	if err != nil {
-		return res.ErrorJSON(c, http.StatusBadRequest, "change_email_failed", err.Error(), middleware.RequestIDFromCtx(c), nil)
-	}
-	return res.JSON(c, http.StatusAccepted, map[string]string{"uuid": uuid})
-}
-
-func (h *Handler) VerifyChangeEmail(c echo.Context) error {
-	req := new(changeEmailVerifyRequest)
-	if err := c.Bind(req); err != nil {
-		return res.ErrorJSON(c, http.StatusBadRequest, "bad_request", "invalid payload", middleware.RequestIDFromCtx(c), nil)
-	}
-	userID := c.Get("user_id").(string)
-	user, err := h.users.VerifyEmailChange(c.Request().Context(), userID, req.UUID, req.Code)
-	if err != nil {
-		return res.ErrorJSON(c, http.StatusBadRequest, "change_email_failed", err.Error(), middleware.RequestIDFromCtx(c), nil)
-	}
-	return res.JSON(c, http.StatusOK, user)
 }
 
 func (h *Handler) AttachIdentity(c echo.Context) error {

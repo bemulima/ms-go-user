@@ -26,7 +26,6 @@ import (
 	natsadapter "github.com/example/user-service/internal/adapters/nats"
 	repo "github.com/example/user-service/internal/adapters/postgres"
 	rbacclient "github.com/example/user-service/internal/adapters/rbac"
-	"github.com/example/user-service/internal/adapters/tarantool"
 	"github.com/example/user-service/internal/usecase"
 	pkglog "github.com/example/user-service/pkg/log"
 )
@@ -54,7 +53,6 @@ func New(ctx context.Context) (*App, error) {
 		return nil, err
 	}
 
-	tarantoolClient := tarantool.NewHTTPClient(cfg.TarantoolURL, 5*time.Second)
 	filestorageClient := filestorage.NewHTTPClient(cfg.FileStorageURL, 5*time.Second)
 	rbacHTTP := rbacclient.NewHTTPClient(cfg.RBACURL, 3*time.Second)
 	rbacClient := rbacclient.NewCachingClient(rbacHTTP, time.Minute)
@@ -87,7 +85,7 @@ func New(ctx context.Context) (*App, error) {
 	profileRepo := repo.NewUserProfileRepository(db)
 	_ = repo.NewUserProviderRepository(db)
 	identityRepo := repo.NewUserIdentityRepository(db)
-	userService := service.NewUserService(userRepo, profileRepo, identityRepo, tarantoolClient)
+	userService := service.NewUserService(userRepo, profileRepo, identityRepo)
 	manageService := service.NewUserManageService(userRepo, profileRepo, rbacClient)
 
 	var imageProcClient imageprocessor.Client

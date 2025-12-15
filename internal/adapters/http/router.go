@@ -35,12 +35,13 @@ func (r *Router) Setup(e *echo.Echo) {
 		AllowHeaders: []string{echo.HeaderAuthorization, echo.HeaderContentType, echo.HeaderXRequestedWith},
 		AllowMethods: []string{http.MethodGet, http.MethodPost, http.MethodPatch, http.MethodDelete, http.MethodOptions},
 	}))
-	internalhttp.Register(e)
+	internalGroup := e.Group("/internal")
+	internalhttp.Register(internalGroup)
 
-	userGroup := e.Group("/users", r.authMW.Handler)
-	apiv1.RegisterRoutes(userGroup, r.apiHandler)
+	apiGroup := e.Group("/api/v1/users", r.authMW.Handler)
+	apiv1.RegisterRoutes(apiGroup, r.apiHandler)
 
-	adminGroup := e.Group("/admin/users", r.authMW.Handler, r.rbacMW.RequireAnyRole("admin", "moderator"))
+	adminGroup := e.Group("/admin/v1/users", r.authMW.Handler, r.rbacMW.RequireAnyRole("admin", "moderator"))
 	adminv1.RegisterRoutes(adminGroup, r.adminHandler)
 	adminGroup.GET("/:id", r.apiHandler.GetByID)
 }
