@@ -36,6 +36,9 @@ services:
     container_name: ms-user-nats
     image: nats:2.10-alpine
     command: ["-js"]
+    networks:
+      - default
+      - ms-net
 
   nginx:
     container_name: ms-user-nginx

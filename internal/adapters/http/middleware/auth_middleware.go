@@ -47,6 +47,11 @@ func (a *AuthMiddleware) Handler(next echo.HandlerFunc) echo.HandlerFunc {
 		if err != nil {
 			return res.ErrorJSON(c, http.StatusUnauthorized, "unauthorized", err.Error(), RequestIDFromCtx(c), nil)
 		}
+		if strings.TrimSpace(role) == "" && a.rbac != nil {
+			if fetchedRole, err := a.rbac.GetRoleByUserID(c.Request().Context(), userID); err == nil {
+				role = fetchedRole
+			}
+		}
 
 		user, err := a.users.FindByID(c.Request().Context(), userID)
 		if err != nil || user == nil {

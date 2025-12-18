@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"errors"
 	"io"
 	"net/http"
 	"strings"
@@ -76,6 +77,9 @@ func (h *Handler) UpdateProfile(c echo.Context) error {
 	userID := c.Get("user_id").(string)
 	profile, err := h.users.UpdateProfile(c.Request().Context(), userID, req.DisplayName, req.AvatarURL)
 	if err != nil {
+		if errors.Is(err, service.ErrInvalidAvatarURL) {
+			return res.ErrorJSON(c, http.StatusBadRequest, "bad_request", "invalid avatar_url", middleware.RequestIDFromCtx(c), nil)
+		}
 		return res.ErrorJSON(c, http.StatusInternalServerError, "update_failed", err.Error(), middleware.RequestIDFromCtx(c), nil)
 	}
 	return res.JSON(c, http.StatusOK, profile)
@@ -90,6 +94,9 @@ func (h *Handler) AttachIdentity(c echo.Context) error {
 	userID := c.Get("user_id").(string)
 	identity, profile, err := h.users.AttachIdentity(c.Request().Context(), userID, provider, req.ProviderUserID, req.Email, req.DisplayName, req.AvatarURL)
 	if err != nil {
+		if errors.Is(err, service.ErrInvalidAvatarURL) {
+			return res.ErrorJSON(c, http.StatusBadRequest, "bad_request", "invalid avatar_url", middleware.RequestIDFromCtx(c), nil)
+		}
 		return res.ErrorJSON(c, http.StatusBadRequest, "attach_failed", err.Error(), middleware.RequestIDFromCtx(c), nil)
 	}
 	return res.JSON(c, http.StatusCreated, map[string]interface{}{"identity": identity, "profile": profile})
