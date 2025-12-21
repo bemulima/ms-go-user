@@ -35,9 +35,41 @@ tasks:
           cat "$f" | docker compose exec -T {{.DB_CONTAINER}} psql -U {{.DB_USER}} -d {{.DB_NAME}}
         done
 
+  down:
+    desc: Stop containers
+    cmds:
+      - docker compose down
+
+  migrate-status:
+    desc: Show migration status (list tables)
+    cmds:
+      - docker compose exec -T {{.DB_CONTAINER}} psql -U {{.DB_USER}} -d {{.DB_NAME}} -c "SELECT tablename FROM pg_tables WHERE schemaname = 'public';"
+
   create-rbac-db:
     desc: Create rbacdb database in the same Postgres instance if it does not exist
     cmds:
       - |
         docker compose exec -T {{.DB_CONTAINER}} psql -U {{.DB_USER}} -d postgres -v ON_ERROR_STOP=1 -c "SELECT 1 FROM pg_database WHERE datname='rbacdb'" >/dev/null 2>&1 \
           || docker compose exec -T {{.DB_CONTAINER}} psql -U {{.DB_USER}} -d postgres -v ON_ERROR_STOP=1 -c "CREATE DATABASE rbacdb"
+
+  create-auth-db:
+    desc: Create authdb database in the same Postgres instance if it does not exist
+    cmds:
+      - |
+        docker compose exec -T {{.DB_CONTAINER}} psql -U {{.DB_USER}} -d postgres -v ON_ERROR_STOP=1 -c "SELECT 1 FROM pg_database WHERE datname='authdb'" >/dev/null 2>&1 \
+          || docker compose exec -T {{.DB_CONTAINER}} psql -U {{.DB_USER}} -d postgres -v ON_ERROR_STOP=1 -c "CREATE DATABASE authdb"
+
+  run:
+    desc: Run service locally
+    cmds:
+      - go run ./cmd/ms-go-user
+
+  test:
+    desc: Run tests
+    cmds:
+      - go test ./...
+
+  lint:
+    desc: Run linter
+    cmds:
+      - golangci-lint run ./...
