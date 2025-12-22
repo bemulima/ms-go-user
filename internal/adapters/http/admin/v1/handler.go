@@ -3,6 +3,7 @@ package v1
 import (
 	"errors"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/labstack/echo/v4"
@@ -46,11 +47,48 @@ type changeStatusRequest struct {
 	Status string `json:"status"`
 }
 
+const (
+	defaultPerPage = 50
+	minPerPage     = 10
+	maxPerPage     = 100
+)
+
 func (h *Handler) RegisterRoutes(g *echo.Group) {
+	g.GET("", h.ListUsers)
 	g.POST("", h.CreateUser)
 	g.PATCH("/:id", h.UpdateUser)
 	g.PATCH("/:id/status", h.ChangeStatus)
 	g.PATCH("/:id/role", h.ChangeRole)
+}
+
+func (h *Handler) ListUsers(c echo.Context) error {
+	page := 1
+	if raw := strings.TrimSpace(c.QueryParam("page")); raw != "" {
+		value, err := strconv.Atoi(raw)
+		if err != nil || value < 1 {
+			return res.ErrorJSON(c, http.StatusBadRequest, "bad_request", "invalid page", middleware.RequestIDFromCtx(c), nil)
+		}
+		page = value
+	}
+
+	per := defaultPerPage
+	if raw := strings.TrimSpace(c.QueryParam("per")); raw != "" {
+		value, err := strconv.Atoi(raw)
+		if err != nil || value < minPerPage || value > maxPerPage {
+			return res.ErrorJSON(c, http.StatusBadRequest, "bad_request", "invalid per", middleware.RequestIDFromCtx(c), nil)
+		}
+		per = value
+	}
+
+	offset := (page - 1) * per
+	users, totalCount, err := h.service.ListUsers(c.Request().Context(), offset, per)
+	if err != nil {
+		return res.ErrorJSON(c, http.StatusBadRequest, "list_failed", err.Error(), middleware.RequestIDFromCtx(c), nil)
+	}
+	return res.JSON(c, http.StatusOK, map[string]interface{}{
+		"totalCount": totalCount,
+		"users":      users,
+	})
 }
 
 func (h *Handler) CreateUser(c echo.Context) error {

@@ -30,6 +30,27 @@ Production-ready Go microservice implementing user management with Clean Archite
 - `make docker-up` / `make docker-down` — manage Docker Compose
 - `make docker-logs` — tail container logs
 
+## API
+
+### Admin endpoints
+
+- `GET /admin/v1/users?page=1&per=50` — list users (per: 10..100, default 50)
+- `GET /admin/v1/users/:id` — get user by ID
+- `POST /admin/v1/users` — create user
+- `PATCH /admin/v1/users/:id` — update user
+- `PATCH /admin/v1/users/:id/status` — change status
+- `PATCH /admin/v1/users/:id/role` — change role
+
+Response shape for list:
+```json
+{
+  "data": {
+    "totalCount": 123,
+    "users": []
+  }
+}
+```
+
 ## Testing
 
 The service is built using TDD with unit tests covering business services and handlers. Run `make test` for the full suite.

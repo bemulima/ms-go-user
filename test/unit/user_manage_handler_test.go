@@ -54,6 +54,62 @@ func TestUserManageHandler_CreateUser(t *testing.T) {
 	require.Equal(t, domain.UserStatusBlocked, resp.Data.Status)
 }
 
+func TestUserManageHandler_ListUsers_Default(t *testing.T) {
+	t.Parallel()
+
+	expected := []domain.User{{ID: "user-1"}, {ID: "user-2"}}
+	var gotOffset, gotLimit int
+	mockSvc := &mockManageService{
+		listUsersFn: func(ctx context.Context, offset, limit int) ([]domain.User, int64, error) {
+			gotOffset = offset
+			gotLimit = limit
+			return expected, 120, nil
+		},
+	}
+	handler := adminv1.NewHandler(mockSvc)
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/admin/users", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	require.NoError(t, handler.ListUsers(c))
+	require.Equal(t, http.StatusOK, rec.Code)
+	require.Equal(t, 0, gotOffset)
+	require.Equal(t, 50, gotLimit)
+
+	var resp struct {
+		Data struct {
+			TotalCount int64         `json:"totalCount"`
+			Users      []domain.User `json:"users"`
+		} `json:"data"`
+	}
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &resp))
+	require.Equal(t, int64(120), resp.Data.TotalCount)
+	require.Len(t, resp.Data.Users, 2)
+	require.Equal(t, "user-1", resp.Data.Users[0].ID)
+}
+
+func TestUserManageHandler_ListUsers_InvalidPer(t *testing.T) {
+	t.Parallel()
+
+	called := false
+	mockSvc := &mockManageService{
+		listUsersFn: func(ctx context.Context, offset, limit int) ([]domain.User, int64, error) {
+			called = true
+			return nil, 0, nil
+		},
+	}
+	handler := adminv1.NewHandler(mockSvc)
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/admin/users?per=5", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	require.NoError(t, handler.ListUsers(c))
+	require.Equal(t, http.StatusBadRequest, rec.Code)
+	require.False(t, called)
+}
+
 func TestUserManageHandler_UpdateUser_NotFound(t *testing.T) {
 	t.Parallel()
 
@@ -128,6 +184,7 @@ type mockManageService struct {
 	updateUserFn   func(ctx context.Context, userID string, req service.UpdateUserRequest) (*domain.User, error)
 	changeStatusFn func(ctx context.Context, userID string, status domain.UserStatus) (*domain.User, error)
 	changeRoleFn   func(ctx context.Context, userID, role string) error
+	listUsersFn    func(ctx context.Context, offset, limit int) ([]domain.User, int64, error)
 }
 
 func (m *mockManageService) CreateUser(ctx context.Context, req service.CreateUserRequest) (*domain.User, error) {
@@ -156,4 +213,11 @@ func (m *mockManageService) ChangeRole(ctx context.Context, userID, role string)
 		return m.changeRoleFn(ctx, userID, role)
 	}
 	return nil
+}
+
+func (m *mockManageService) ListUsers(ctx context.Context, offset, limit int) ([]domain.User, int64, error) {
+	if m.listUsersFn != nil {
+		return m.listUsersFn(ctx, offset, limit)
+	}
+	return nil, 0, nil
 }

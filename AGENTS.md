@@ -22,6 +22,9 @@
 - Favor table-driven tests with descriptive names (e.g., `TestRegisterUser_Succeeds`). Use interfaces or mocks for brokers and OAuth clients.
 - Run `go test ./internal/...` or `go test ./test/...` to isolate suites; include testing notes in PR descriptions.
 
+## Admin API Notes
+- `GET /admin/v1/users?page=1&per=50` returns `{totalCount, users}` (per: 10..100, default 50).
+
 ## Commit & Pull Request Guidelines
 - Prefer Conventional Commit prefixes (`feat:`, `fix:`, `docs:`) to signal intent, followed by a brief imperative description.
 - PRs should describe what changed, highlight migrations/configuration updates, mention manual test steps, and link related issues. Add screenshots if HTTP responses or logging behavior change.

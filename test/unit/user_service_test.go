@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/example/user-service/internal/adapters/tarantool"
 	"github.com/example/user-service/internal/domain"
 	"github.com/example/user-service/internal/usecase"
 )
@@ -71,25 +70,10 @@ func (identityRepoStub) FindByUserAndProvider(ctx context.Context, userID string
 }
 func (identityRepoStub) Delete(ctx context.Context, identity *domain.UserIdentity) error { return nil }
 
-type tarantoolStub struct{}
-
-func (tarantoolStub) StartRegistration(ctx context.Context, email, password string) (string, error) {
-	return "", nil
-}
-func (tarantoolStub) VerifyRegistration(ctx context.Context, uuid, code string) (*tarantool.VerificationResult, error) {
-	return nil, nil
-}
-func (tarantoolStub) StartEmailChange(ctx context.Context, userID, email string) (string, error) {
-	return "uuid-change", nil
-}
-func (tarantoolStub) VerifyEmailChange(ctx context.Context, uuid, code string) (*tarantool.VerificationResult, error) {
-	return &tarantool.VerificationResult{Email: "new@example.com"}, nil
-}
-
 func TestUserService_UpdateProfile(t *testing.T) {
 	users := newUserRepoStub()
 	profiles := newProfileRepoStub()
-	svc := service.NewUserService(users, profiles, identityRepoStub{}, tarantoolStub{})
+	svc := service.NewUserService(users, profiles, identityRepoStub{})
 	display := "New Name"
 	avatar := "http://avatar"
 
@@ -97,14 +81,4 @@ func TestUserService_UpdateProfile(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, &display, profile.DisplayName)
 	assert.Equal(t, &avatar, profile.AvatarURL)
-}
-
-func TestUserService_VerifyEmailChange(t *testing.T) {
-	users := newUserRepoStub()
-	profiles := newProfileRepoStub()
-	svc := service.NewUserService(users, profiles, identityRepoStub{}, tarantoolStub{})
-
-	user, err := svc.VerifyEmailChange(context.Background(), "user-1", "uuid", "code")
-	require.NoError(t, err)
-	assert.Equal(t, "new@example.com", user.Email)
 }

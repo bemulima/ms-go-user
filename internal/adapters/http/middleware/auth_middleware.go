@@ -26,10 +26,17 @@ type AuthMiddleware struct {
 	rbac   rbacclient.Client
 	users  repo.UserRepository
 	nats   *nats.Conn
+	verify TokenVerifier
 }
+
+type TokenVerifier func(ctx context.Context, token string) (string, string, string, error)
 
 func NewAuthMiddleware(cfg *config.Config, logger pkglog.Logger, rbac rbacclient.Client, users repo.UserRepository, natsConn *nats.Conn) *AuthMiddleware {
 	return &AuthMiddleware{cfg: cfg, logger: logger, rbac: rbac, users: users, nats: natsConn}
+}
+
+func NewAuthMiddlewareWithVerifier(cfg *config.Config, logger pkglog.Logger, rbac rbacclient.Client, users repo.UserRepository, natsConn *nats.Conn, verifier TokenVerifier) *AuthMiddleware {
+	return &AuthMiddleware{cfg: cfg, logger: logger, rbac: rbac, users: users, nats: natsConn, verify: verifier}
 }
 
 func (a *AuthMiddleware) Handler(next echo.HandlerFunc) echo.HandlerFunc {
@@ -43,7 +50,17 @@ func (a *AuthMiddleware) Handler(next echo.HandlerFunc) echo.HandlerFunc {
 			return res.ErrorJSON(c, http.StatusUnauthorized, "unauthorized", "invalid token", RequestIDFromCtx(c), nil)
 		}
 
-		userID, role, email, err := a.verifyWithAuthService(c.Request().Context(), parts[1])
+		var (
+			userID string
+			role   string
+			email  string
+			err    error
+		)
+		if a.verify != nil {
+			userID, role, email, err = a.verify(c.Request().Context(), parts[1])
+		} else {
+			userID, role, email, err = a.verifyWithAuthService(c.Request().Context(), parts[1])
+		}
 		if err != nil {
 			return res.ErrorJSON(c, http.StatusUnauthorized, "unauthorized", err.Error(), RequestIDFromCtx(c), nil)
 		}

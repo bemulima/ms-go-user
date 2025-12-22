@@ -21,6 +21,7 @@ type (
 		UpdateUser(ctx context.Context, userID string, req UpdateUserRequest) (*domain.User, error)
 		ChangeStatus(ctx context.Context, userID string, status domain.UserStatus) (*domain.User, error)
 		ChangeRole(ctx context.Context, userID, role string) error
+		ListUsers(ctx context.Context, offset, limit int) ([]domain.User, int64, error)
 	}
 
 	CreateUserRequest struct {
@@ -187,6 +188,10 @@ func (s *userManageService) ChangeRole(ctx context.Context, userID, role string)
 		return err
 	}
 	return s.rbac.AssignRole(ctx, userID, role)
+}
+
+func (s *userManageService) ListUsers(ctx context.Context, offset, limit int) ([]domain.User, int64, error) {
+	return s.users.List(ctx, offset, limit)
 }
 
 func validateEmail(email string) error {
