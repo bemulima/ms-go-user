@@ -9,9 +9,13 @@ services:
     env_file:
       - .env
     depends_on:
-      - postgres
-      - rabbitmq
-      - nats
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+      nats:
+        condition: service_started
+    restart: unless-stopped
     networks:
       - default
       - ms-net
@@ -23,6 +27,12 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
     volumes:
       - pgdata:/var/lib/postgresql/data
 
