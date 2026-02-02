@@ -41,25 +41,42 @@ func NewAuthMiddlewareWithVerifier(cfg *config.Config, logger pkglog.Logger, rba
 
 func (a *AuthMiddleware) Handler(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		header := c.Request().Header.Get(echo.HeaderAuthorization)
-		if header == "" {
-			return res.ErrorJSON(c, http.StatusUnauthorized, "unauthorized", "missing token", RequestIDFromCtx(c), nil)
-		}
-		parts := strings.SplitN(header, " ", 2)
-		if len(parts) != 2 || !strings.EqualFold(parts[0], "bearer") {
-			return res.ErrorJSON(c, http.StatusUnauthorized, "unauthorized", "invalid token", RequestIDFromCtx(c), nil)
-		}
-
 		var (
-			userID string
-			role   string
-			email  string
-			err    error
+			userID          string
+			role            string
+			email           string
+			err             error
+			trustedByHeader bool
 		)
-		if a.verify != nil {
-			userID, role, email, err = a.verify(c.Request().Context(), parts[1])
+
+		headerUserID := c.Request().Header.Get("X-User-Id")
+		if headerUserID == "" {
+			headerUserID = c.Request().Header.Get("X-User-ID")
+		}
+		headerRole := c.Request().Header.Get("X-User-Role")
+
+		if headerUserID != "" {
+			if strings.TrimSpace(headerRole) == "" {
+				return res.ErrorJSON(c, http.StatusUnauthorized, "unauthorized", "missing role", RequestIDFromCtx(c), nil)
+			}
+			userID = headerUserID
+			role = headerRole
+			email = ""
+			trustedByHeader = true
 		} else {
-			userID, role, email, err = a.verifyWithAuthService(c.Request().Context(), parts[1])
+			header := c.Request().Header.Get(echo.HeaderAuthorization)
+			if header == "" {
+				return res.ErrorJSON(c, http.StatusUnauthorized, "unauthorized", "missing token", RequestIDFromCtx(c), nil)
+			}
+			parts := strings.SplitN(header, " ", 2)
+			if len(parts) != 2 || !strings.EqualFold(parts[0], "bearer") {
+				return res.ErrorJSON(c, http.StatusUnauthorized, "unauthorized", "invalid token", RequestIDFromCtx(c), nil)
+			}
+			if a.verify != nil {
+				userID, role, email, err = a.verify(c.Request().Context(), parts[1])
+			} else {
+				userID, role, email, err = a.verifyWithAuthService(c.Request().Context(), parts[1])
+			}
 		}
 		if err != nil {
 			return res.ErrorJSON(c, http.StatusUnauthorized, "unauthorized", err.Error(), RequestIDFromCtx(c), nil)
@@ -77,7 +94,7 @@ func (a *AuthMiddleware) Handler(next echo.HandlerFunc) echo.HandlerFunc {
 		c.Set("user", user)
 		c.Set("email", email)
 
-		if a.nats != nil {
+		if a.nats != nil && !trustedByHeader {
 			allowed, err := a.checkRole(c.Request().Context(), userID, role)
 			if err != nil {
 				return res.ErrorJSON(c, http.StatusForbidden, "forbidden", err.Error(), RequestIDFromCtx(c), nil)
