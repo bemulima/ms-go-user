@@ -11,7 +11,12 @@ vars:
 
 tasks:
   up:
-    desc: Start Postgres container
+    desc: Start full local stack (service + nginx + dependencies)
+    cmds:
+      - docker compose up -d --build
+
+  up-db:
+    desc: Start only Postgres container
     cmds:
       - docker compose up -d {{.DB_CONTAINER}}
 
