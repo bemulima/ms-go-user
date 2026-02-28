@@ -25,19 +25,19 @@ type (
 	}
 
 	CreateUserRequest struct {
-		Email       string
-		Password    string
-		DisplayName *string
-		AvatarURL   *string
-		Role        string
-		Status      domain.UserStatus
+		Email        string
+		Password     string
+		DisplayName  *string
+		AvatarFileID *string
+		Role         string
+		Status       domain.UserStatus
 	}
 
 	UpdateUserRequest struct {
-		Email       *string
-		Password    *string
-		DisplayName *string
-		AvatarURL   *string
+		Email        *string
+		Password     *string
+		DisplayName  *string
+		AvatarFileID *string
 	}
 )
 
@@ -90,9 +90,9 @@ func (s *userManageService) CreateUser(ctx context.Context, req CreateUserReques
 	}
 
 	profile := &domain.UserProfile{
-		UserID:      user.ID,
-		DisplayName: req.DisplayName,
-		AvatarURL:   req.AvatarURL,
+		UserID:       user.ID,
+		DisplayName:  req.DisplayName,
+		AvatarFileID: req.AvatarFileID,
 	}
 	if err := s.profiles.Create(ctx, profile); err != nil {
 		_ = s.users.Delete(ctx, user.ID)
@@ -144,12 +144,12 @@ func (s *userManageService) UpdateUser(ctx context.Context, userID string, req U
 		user.SetPasswordHash(string(hash))
 	}
 
-	if req.DisplayName != nil || req.AvatarURL != nil {
+	if req.DisplayName != nil || req.AvatarFileID != nil {
 		profile, err := s.profiles.FindByUserID(ctx, userID)
 		if err != nil {
 			return nil, err
 		}
-		profile.Update(req.DisplayName, req.AvatarURL)
+		profile.Update(req.DisplayName, req.AvatarFileID)
 		if err := s.profiles.Update(ctx, profile); err != nil {
 			return nil, err
 		}

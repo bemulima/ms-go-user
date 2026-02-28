@@ -94,7 +94,7 @@ func New(ctx context.Context) (*App, error) {
 	}
 
 	apiHandler := apiv1.NewHandler(userService, filestorageClient, imageProcClient, cfg.AvatarPresetGroup, cfg.AvatarFileKind)
-	adminHandler := adminv1.NewHandler(manageService)
+	adminHandler := adminv1.NewHandler(manageService, filestorageClient)
 
 	authMW := mw.NewAuthMiddleware(cfg, logger, rbacClient, userRepo, natsConn)
 	rbacMW := mw.NewRBACMiddleware(rbacClient)

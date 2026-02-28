@@ -75,10 +75,20 @@ func TestUserService_UpdateProfile(t *testing.T) {
 	profiles := newProfileRepoStub()
 	svc := service.NewUserService(users, profiles, identityRepoStub{})
 	display := "New Name"
-	avatar := "http://avatar"
 
-	profile, err := svc.UpdateProfile(context.Background(), "user-1", &display, &avatar)
+	profile, err := svc.UpdateProfile(context.Background(), "user-1", &display)
 	require.NoError(t, err)
 	assert.Equal(t, &display, profile.DisplayName)
-	assert.Equal(t, &avatar, profile.AvatarURL)
+	assert.Nil(t, profile.AvatarFileID)
+}
+
+func TestUserService_SetAvatarFileID(t *testing.T) {
+	users := newUserRepoStub()
+	profiles := newProfileRepoStub()
+	svc := service.NewUserService(users, profiles, identityRepoStub{})
+
+	profile, err := svc.SetAvatarFileID(context.Background(), "user-1", "file-123")
+	require.NoError(t, err)
+	require.NotNil(t, profile.AvatarFileID)
+	assert.Equal(t, "file-123", *profile.AvatarFileID)
 }

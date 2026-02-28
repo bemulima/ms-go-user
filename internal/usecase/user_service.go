@@ -4,19 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/url"
 	"strings"
 
 	"github.com/example/user-service/internal/adapters/postgres"
 	"github.com/example/user-service/internal/domain"
 )
 
-var ErrInvalidAvatarURL = errors.New("invalid avatar_url")
-
 type UserService interface {
 	GetMe(ctx context.Context, userID string) (*domain.User, error)
 	GetByID(ctx context.Context, requesterID, targetID string) (*domain.User, error)
-	UpdateProfile(ctx context.Context, userID string, displayName, avatarURL *string) (*domain.UserProfile, error)
+	UpdateProfile(ctx context.Context, userID string, displayName *string) (*domain.UserProfile, error)
+	SetAvatarFileID(ctx context.Context, userID, avatarFileID string) (*domain.UserProfile, error)
 	AttachIdentity(ctx context.Context, userID string, provider domain.IdentityProvider, providerUserID, email string, displayName, avatarURL *string) (*domain.UserIdentity, *domain.UserProfile, error)
 	RemoveIdentity(ctx context.Context, userID string, provider domain.IdentityProvider, providerUserID string) error
 }
@@ -39,42 +37,35 @@ func (s *userService) GetByID(ctx context.Context, requesterID, targetID string)
 	return s.users.FindByID(ctx, targetID)
 }
 
-func isValidAvatarURL(raw string) bool {
-	raw = strings.TrimSpace(raw)
-	if raw == "" {
-		return false
-	}
-	u, err := url.Parse(raw)
-	if err != nil {
-		return false
-	}
-	if u.Scheme != "http" && u.Scheme != "https" {
-		return false
-	}
-	return u.Host != ""
-}
-
-func (s *userService) UpdateProfile(ctx context.Context, userID string, displayName, avatarURL *string) (*domain.UserProfile, error) {
-	if avatarURL != nil && !isValidAvatarURL(*avatarURL) {
-		return nil, ErrInvalidAvatarURL
-	}
+func (s *userService) UpdateProfile(ctx context.Context, userID string, displayName *string) (*domain.UserProfile, error) {
 	profile, err := s.profiles.FindByUserID(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
-	profile.Update(displayName, avatarURL)
+	profile.Update(displayName, nil)
 	if err := s.profiles.Update(ctx, profile); err != nil {
 		return nil, err
 	}
 	return profile, nil
 }
 
+func (s *userService) SetAvatarFileID(ctx context.Context, userID, avatarFileID string) (*domain.UserProfile, error) {
+	profile, err := s.profiles.FindByUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	profile.Update(nil, &avatarFileID)
+	if err := s.profiles.Update(ctx, profile); err != nil {
+		return nil, err
+	}
+
+	return profile, nil
+}
+
 func (s *userService) AttachIdentity(ctx context.Context, userID string, provider domain.IdentityProvider, providerUserID, email string, displayName, avatarURL *string) (*domain.UserIdentity, *domain.UserProfile, error) {
 	if !provider.IsValid() {
 		return nil, nil, fmt.Errorf("unsupported provider")
-	}
-	if avatarURL != nil && !isValidAvatarURL(*avatarURL) {
-		return nil, nil, ErrInvalidAvatarURL
 	}
 	user, err := s.users.FindByID(ctx, userID)
 	if err != nil {
@@ -106,7 +97,7 @@ func (s *userService) AttachIdentity(ctx context.Context, userID string, provide
 	if err != nil {
 		return nil, nil, err
 	}
-	profile.Update(displayName, avatarURL)
+	profile.Update(displayName, nil)
 	if err := s.profiles.Update(ctx, profile); err != nil {
 		return nil, nil, err
 	}

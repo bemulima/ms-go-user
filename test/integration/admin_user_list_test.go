@@ -25,7 +25,7 @@ func TestAdminUserListRoute(t *testing.T) {
 	}
 
 	e := echo.New()
-	handler := adminv1.NewHandler(stub)
+	handler := adminv1.NewHandler(stub, nil)
 	group := e.Group("/admin/v1/users")
 	handler.RegisterRoutes(group)
 

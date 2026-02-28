@@ -9,6 +9,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 
+	"github.com/example/user-service/internal/adapters/filestorage"
 	"github.com/example/user-service/internal/adapters/http/middleware"
 	"github.com/example/user-service/internal/domain"
 	"github.com/example/user-service/internal/usecase"
@@ -17,26 +18,27 @@ import (
 
 type Handler struct {
 	service service.UserManageService
+	storage filestorage.Client
 }
 
-func NewHandler(s service.UserManageService) *Handler {
-	return &Handler{service: s}
+func NewHandler(s service.UserManageService, storage filestorage.Client) *Handler {
+	return &Handler{service: s, storage: storage}
 }
 
 type createManageUserRequest struct {
-	Email       string  `json:"email"`
-	Password    string  `json:"password"`
-	DisplayName *string `json:"display_name"`
-	AvatarURL   *string `json:"avatar_url"`
-	Role        string  `json:"role"`
-	Status      string  `json:"status"`
+	Email        string  `json:"email"`
+	Password     string  `json:"password"`
+	DisplayName  *string `json:"display_name"`
+	AvatarFileID *string `json:"avatar_file_id"`
+	Role         string  `json:"role"`
+	Status       string  `json:"status"`
 }
 
 type updateManageUserRequest struct {
-	Email       *string `json:"email"`
-	Password    *string `json:"password"`
-	DisplayName *string `json:"display_name"`
-	AvatarURL   *string `json:"avatar_url"`
+	Email        *string `json:"email"`
+	Password     *string `json:"password"`
+	DisplayName  *string `json:"display_name"`
+	AvatarFileID *string `json:"avatar_file_id"`
 }
 
 type changeRoleRequest struct {
@@ -85,6 +87,9 @@ func (h *Handler) ListUsers(c echo.Context) error {
 	if err != nil {
 		return res.ErrorJSON(c, http.StatusBadRequest, "list_failed", err.Error(), middleware.RequestIDFromCtx(c), nil)
 	}
+	for idx := range users {
+		users[idx].Profile = h.decorateProfile(users[idx].Profile)
+	}
 	return res.JSON(c, http.StatusOK, map[string]interface{}{
 		"totalCount": totalCount,
 		"users":      users,
@@ -98,17 +103,17 @@ func (h *Handler) CreateUser(c echo.Context) error {
 	}
 	status := domain.UserStatus(strings.ToUpper(strings.TrimSpace(req.Status)))
 	user, err := h.service.CreateUser(c.Request().Context(), service.CreateUserRequest{
-		Email:       req.Email,
-		Password:    req.Password,
-		DisplayName: req.DisplayName,
-		AvatarURL:   req.AvatarURL,
-		Role:        req.Role,
-		Status:      status,
+		Email:        req.Email,
+		Password:     req.Password,
+		DisplayName:  req.DisplayName,
+		AvatarFileID: req.AvatarFileID,
+		Role:         req.Role,
+		Status:       status,
 	})
 	if err != nil {
 		return res.ErrorJSON(c, http.StatusBadRequest, "create_failed", err.Error(), middleware.RequestIDFromCtx(c), nil)
 	}
-	return res.JSON(c, http.StatusCreated, user)
+	return res.JSON(c, http.StatusCreated, h.decorateUser(user))
 }
 
 func (h *Handler) UpdateUser(c echo.Context) error {
@@ -118,10 +123,10 @@ func (h *Handler) UpdateUser(c echo.Context) error {
 	}
 	userID := c.Param("id")
 	user, err := h.service.UpdateUser(c.Request().Context(), userID, service.UpdateUserRequest{
-		Email:       req.Email,
-		Password:    req.Password,
-		DisplayName: req.DisplayName,
-		AvatarURL:   req.AvatarURL,
+		Email:        req.Email,
+		Password:     req.Password,
+		DisplayName:  req.DisplayName,
+		AvatarFileID: req.AvatarFileID,
 	})
 	if err != nil {
 		status := http.StatusBadRequest
@@ -130,7 +135,7 @@ func (h *Handler) UpdateUser(c echo.Context) error {
 		}
 		return res.ErrorJSON(c, status, "update_failed", err.Error(), middleware.RequestIDFromCtx(c), nil)
 	}
-	return res.JSON(c, http.StatusOK, user)
+	return res.JSON(c, http.StatusOK, h.decorateUser(user))
 }
 
 func (h *Handler) ChangeStatus(c echo.Context) error {
@@ -148,7 +153,7 @@ func (h *Handler) ChangeStatus(c echo.Context) error {
 		}
 		return res.ErrorJSON(c, statusCode, "status_change_failed", err.Error(), middleware.RequestIDFromCtx(c), nil)
 	}
-	return res.JSON(c, http.StatusOK, user)
+	return res.JSON(c, http.StatusOK, h.decorateUser(user))
 }
 
 func (h *Handler) ChangeRole(c echo.Context) error {
@@ -165,4 +170,20 @@ func (h *Handler) ChangeRole(c echo.Context) error {
 		return res.ErrorJSON(c, status, "role_change_failed", err.Error(), middleware.RequestIDFromCtx(c), nil)
 	}
 	return res.JSON(c, http.StatusOK, map[string]string{"status": "role_updated"})
+}
+
+func (h *Handler) decorateUser(user *domain.User) *domain.User {
+	if user == nil {
+		return nil
+	}
+	user.Profile = h.decorateProfile(user.Profile)
+	return user
+}
+
+func (h *Handler) decorateProfile(profile *domain.UserProfile) *domain.UserProfile {
+	if profile == nil || h.storage == nil {
+		return profile
+	}
+	profile.WithAvatarURL(h.storage.DownloadURL)
+	return profile
 }

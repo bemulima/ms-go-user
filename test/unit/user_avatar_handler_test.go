@@ -22,11 +22,10 @@ func TestUploadAvatar_Success(t *testing.T) {
 
 	fs := &stubFilestorage{}
 	us := &stubUserService{
-		updateProfileFn: func(ctx context.Context, userID string, displayName, avatarURL *string) (*domain.UserProfile, error) {
+		setAvatarFileIDFn: func(ctx context.Context, userID, avatarFileID string) (*domain.UserProfile, error) {
 			require.Equal(t, "user-1", userID)
-			require.NotNil(t, avatarURL)
-			require.Contains(t, *avatarURL, "/files/file-123/download")
-			return &domain.UserProfile{UserID: userID, AvatarURL: avatarURL}, nil
+			require.Equal(t, "file-123", avatarFileID)
+			return &domain.UserProfile{UserID: userID, AvatarFileID: &avatarFileID}, nil
 		},
 	}
 	handler := v1.NewHandler(us, fs, nil, "avatar", "USER_MEDIA")
@@ -148,7 +147,8 @@ func (s *stubImageProc) Generate(ctx context.Context, originalID, ownerID, fileK
 }
 
 type stubUserService struct {
-	updateProfileFn func(ctx context.Context, userID string, displayName, avatarURL *string) (*domain.UserProfile, error)
+	updateProfileFn   func(ctx context.Context, userID string, displayName *string) (*domain.UserProfile, error)
+	setAvatarFileIDFn func(ctx context.Context, userID, avatarFileID string) (*domain.UserProfile, error)
 }
 
 func (s *stubUserService) GetMe(ctx context.Context, userID string) (*domain.User, error) {
@@ -157,11 +157,17 @@ func (s *stubUserService) GetMe(ctx context.Context, userID string) (*domain.Use
 func (s *stubUserService) GetByID(ctx context.Context, requesterID, targetID string) (*domain.User, error) {
 	return nil, nil
 }
-func (s *stubUserService) UpdateProfile(ctx context.Context, userID string, displayName, avatarURL *string) (*domain.UserProfile, error) {
+func (s *stubUserService) UpdateProfile(ctx context.Context, userID string, displayName *string) (*domain.UserProfile, error) {
 	if s.updateProfileFn != nil {
-		return s.updateProfileFn(ctx, userID, displayName, avatarURL)
+		return s.updateProfileFn(ctx, userID, displayName)
 	}
-	return &domain.UserProfile{UserID: userID, AvatarURL: avatarURL}, nil
+	return &domain.UserProfile{UserID: userID}, nil
+}
+func (s *stubUserService) SetAvatarFileID(ctx context.Context, userID, avatarFileID string) (*domain.UserProfile, error) {
+	if s.setAvatarFileIDFn != nil {
+		return s.setAvatarFileIDFn(ctx, userID, avatarFileID)
+	}
+	return &domain.UserProfile{UserID: userID, AvatarFileID: &avatarFileID}, nil
 }
 func (s *stubUserService) StartEmailChange(ctx context.Context, userID, newEmail string) (string, error) {
 	return "", nil

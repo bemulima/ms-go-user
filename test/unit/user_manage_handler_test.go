@@ -34,7 +34,7 @@ func TestUserManageHandler_CreateUser(t *testing.T) {
 			}, nil
 		},
 	}
-	handler := adminv1.NewHandler(mockSvc)
+	handler := adminv1.NewHandler(mockSvc, nil)
 
 	e := echo.New()
 	body := `{"email":"Admin@example.com","password":"Password1","role":"admin","status":"blocked"}`
@@ -66,7 +66,7 @@ func TestUserManageHandler_ListUsers_Default(t *testing.T) {
 			return expected, 120, nil
 		},
 	}
-	handler := adminv1.NewHandler(mockSvc)
+	handler := adminv1.NewHandler(mockSvc, nil)
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/admin/users", nil)
 	rec := httptest.NewRecorder()
@@ -99,7 +99,7 @@ func TestUserManageHandler_ListUsers_InvalidPer(t *testing.T) {
 			return nil, 0, nil
 		},
 	}
-	handler := adminv1.NewHandler(mockSvc)
+	handler := adminv1.NewHandler(mockSvc, nil)
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/admin/users?per=5", nil)
 	rec := httptest.NewRecorder()
@@ -118,7 +118,7 @@ func TestUserManageHandler_UpdateUser_NotFound(t *testing.T) {
 			return nil, gorm.ErrRecordNotFound
 		},
 	}
-	handler := adminv1.NewHandler(mockSvc)
+	handler := adminv1.NewHandler(mockSvc, nil)
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodPatch, "/admin/users/123", strings.NewReader(`{"email":"x@example.com"}`))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -139,7 +139,7 @@ func TestUserManageHandler_ChangeStatus(t *testing.T) {
 			return &domain.User{ID: userID, Status: status, Profile: &domain.UserProfile{UserID: userID}}, nil
 		},
 	}
-	handler := adminv1.NewHandler(mockSvc)
+	handler := adminv1.NewHandler(mockSvc, nil)
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodPatch, "/admin/users/42/status", strings.NewReader(`{"status":"active"}`))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -166,7 +166,7 @@ func TestUserManageHandler_ChangeRole_Error(t *testing.T) {
 			return errors.New("bad role")
 		},
 	}
-	handler := adminv1.NewHandler(mockSvc)
+	handler := adminv1.NewHandler(mockSvc, nil)
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodPatch, "/admin/users/99/role", strings.NewReader(`{"role":""}`))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)

@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"errors"
 	"io"
 	"net/http"
 	"strings"
@@ -30,7 +29,6 @@ func NewHandler(users service.UserService, storage filestorage.Client, imgProc i
 
 type updateProfileRequest struct {
 	DisplayName *string `json:"display_name"`
-	AvatarURL   *string `json:"avatar_url"`
 }
 
 type attachIdentityRequest struct {
@@ -56,7 +54,7 @@ func (h *Handler) GetMe(c echo.Context) error {
 	if err != nil {
 		return res.ErrorJSON(c, http.StatusNotFound, "not_found", "user not found", middleware.RequestIDFromCtx(c), nil)
 	}
-	return res.JSON(c, http.StatusOK, user)
+	return res.JSON(c, http.StatusOK, h.decorateUser(user))
 }
 
 func (h *Handler) GetByID(c echo.Context) error {
@@ -66,7 +64,7 @@ func (h *Handler) GetByID(c echo.Context) error {
 	if err != nil {
 		return res.ErrorJSON(c, http.StatusNotFound, "not_found", "user not found", middleware.RequestIDFromCtx(c), nil)
 	}
-	return res.JSON(c, http.StatusOK, user)
+	return res.JSON(c, http.StatusOK, h.decorateUser(user))
 }
 
 func (h *Handler) UpdateProfile(c echo.Context) error {
@@ -75,14 +73,11 @@ func (h *Handler) UpdateProfile(c echo.Context) error {
 		return res.ErrorJSON(c, http.StatusBadRequest, "bad_request", "invalid payload", middleware.RequestIDFromCtx(c), nil)
 	}
 	userID := c.Get("user_id").(string)
-	profile, err := h.users.UpdateProfile(c.Request().Context(), userID, req.DisplayName, req.AvatarURL)
+	profile, err := h.users.UpdateProfile(c.Request().Context(), userID, req.DisplayName)
 	if err != nil {
-		if errors.Is(err, service.ErrInvalidAvatarURL) {
-			return res.ErrorJSON(c, http.StatusBadRequest, "bad_request", "invalid avatar_url", middleware.RequestIDFromCtx(c), nil)
-		}
 		return res.ErrorJSON(c, http.StatusInternalServerError, "update_failed", err.Error(), middleware.RequestIDFromCtx(c), nil)
 	}
-	return res.JSON(c, http.StatusOK, profile)
+	return res.JSON(c, http.StatusOK, h.decorateProfile(profile))
 }
 
 func (h *Handler) AttachIdentity(c echo.Context) error {
@@ -94,12 +89,9 @@ func (h *Handler) AttachIdentity(c echo.Context) error {
 	userID := c.Get("user_id").(string)
 	identity, profile, err := h.users.AttachIdentity(c.Request().Context(), userID, provider, req.ProviderUserID, req.Email, req.DisplayName, req.AvatarURL)
 	if err != nil {
-		if errors.Is(err, service.ErrInvalidAvatarURL) {
-			return res.ErrorJSON(c, http.StatusBadRequest, "bad_request", "invalid avatar_url", middleware.RequestIDFromCtx(c), nil)
-		}
 		return res.ErrorJSON(c, http.StatusBadRequest, "attach_failed", err.Error(), middleware.RequestIDFromCtx(c), nil)
 	}
-	return res.JSON(c, http.StatusCreated, map[string]interface{}{"identity": identity, "profile": profile})
+	return res.JSON(c, http.StatusCreated, map[string]interface{}{"identity": identity, "profile": h.decorateProfile(profile)})
 }
 
 func (h *Handler) RemoveIdentity(c echo.Context) error {
@@ -156,8 +148,7 @@ func (h *Handler) UploadAvatar(c echo.Context) error {
 		return res.ErrorJSON(c, http.StatusBadRequest, "upload_failed", err.Error(), middleware.RequestIDFromCtx(c), nil)
 	}
 
-	avatarURL := h.storage.DownloadURL(uploadResp.ID)
-	profile, err := h.users.UpdateProfile(c.Request().Context(), userID, nil, &avatarURL)
+	profile, err := h.users.SetAvatarFileID(c.Request().Context(), userID, uploadResp.ID)
 	if err != nil {
 		return res.ErrorJSON(c, http.StatusInternalServerError, "update_failed", err.Error(), middleware.RequestIDFromCtx(c), nil)
 	}
@@ -169,13 +160,30 @@ func (h *Handler) UploadAvatar(c echo.Context) error {
 	}
 
 	signedURL, _ := h.storage.SignedURL(c.Request().Context(), uploadResp.ID, 15)
+	downloadURL := h.storage.DownloadURL(uploadResp.ID)
 
 	response := map[string]interface{}{
 		"file_id":         uploadResp.ID,
-		"download_url":    avatarURL,
+		"download_url":    downloadURL,
 		"signed_url":      signedURL,
-		"profile":         profile,
+		"profile":         h.decorateProfile(profile),
 		"processing_mode": processingMode,
 	}
 	return res.JSON(c, http.StatusCreated, response)
+}
+
+func (h *Handler) decorateUser(user *domain.User) *domain.User {
+	if user == nil {
+		return nil
+	}
+	user.Profile = h.decorateProfile(user.Profile)
+	return user
+}
+
+func (h *Handler) decorateProfile(profile *domain.UserProfile) *domain.UserProfile {
+	if profile == nil || h.storage == nil {
+		return profile
+	}
+	profile.WithAvatarURL(h.storage.DownloadURL)
+	return profile
 }

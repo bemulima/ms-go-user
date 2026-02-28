@@ -42,7 +42,7 @@ func TestAdminUserListAuthAndRBAC(t *testing.T) {
 
 	e := echo.New()
 	group := e.Group("/admin/v1/users", authMW.Handler, rbacMW.RequireAnyRole("admin", "moderator"))
-	handler := adminv1.NewHandler(stub)
+	handler := adminv1.NewHandler(stub, nil)
 	handler.RegisterRoutes(group)
 
 	unauthorized := httptest.NewRequest(http.MethodGet, "/admin/v1/users", nil)
