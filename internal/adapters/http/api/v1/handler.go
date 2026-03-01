@@ -54,7 +54,11 @@ func (h *Handler) GetMe(c echo.Context) error {
 	if err != nil {
 		return res.ErrorJSON(c, http.StatusNotFound, "not_found", "user not found", middleware.RequestIDFromCtx(c), nil)
 	}
-	return res.JSON(c, http.StatusOK, h.decorateUser(user))
+	decorated := h.decorateUser(user)
+	if decorated != nil {
+		decorated.Email = maskEmail(decorated.Email)
+	}
+	return res.JSON(c, http.StatusOK, decorated)
 }
 
 func (h *Handler) GetByID(c echo.Context) error {
@@ -186,4 +190,34 @@ func (h *Handler) decorateProfile(profile *domain.UserProfile) *domain.UserProfi
 	}
 	profile.WithAvatarURL(h.storage.DownloadURL)
 	return profile
+}
+
+func maskEmail(email string) string {
+	normalized := strings.TrimSpace(email)
+	parts := strings.Split(normalized, "@")
+	if len(parts) != 2 {
+		return normalized
+	}
+
+	local, domain := parts[0], parts[1]
+	localRunes := []rune(local)
+	if len(localRunes) == 0 {
+		return normalized
+	}
+	maskedLocal := string(localRunes[0]) + "****"
+
+	domainName := domain
+	domainSuffix := ""
+	if dot := strings.LastIndex(domain, "."); dot > 0 && dot < len(domain)-1 {
+		domainName = domain[:dot]
+		domainSuffix = domain[dot:]
+	}
+
+	maskedDomain := "***"
+	domainRunes := []rune(domainName)
+	if len(domainRunes) > 0 {
+		maskedDomain += string(domainRunes[len(domainRunes)-1])
+	}
+
+	return maskedLocal + "@" + maskedDomain + domainSuffix
 }
