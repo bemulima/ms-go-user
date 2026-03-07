@@ -181,3 +181,6 @@ func (s *stubUserService) AttachIdentity(ctx context.Context, userID string, pro
 func (s *stubUserService) RemoveIdentity(ctx context.Context, userID string, provider domain.IdentityProvider, providerUserID string) error {
 	return nil
 }
+func (s *stubUserService) ListIdentities(ctx context.Context, userID string) ([]domain.UserIdentity, error) {
+	return nil, nil
+}

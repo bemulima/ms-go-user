@@ -16,6 +16,7 @@ type UserService interface {
 	UpdateProfile(ctx context.Context, userID string, displayName *string) (*domain.UserProfile, error)
 	SetAvatarFileID(ctx context.Context, userID, avatarFileID string) (*domain.UserProfile, error)
 	AttachIdentity(ctx context.Context, userID string, provider domain.IdentityProvider, providerUserID, email string, displayName, avatarURL *string) (*domain.UserIdentity, *domain.UserProfile, error)
+	ListIdentities(ctx context.Context, userID string) ([]domain.UserIdentity, error)
 	RemoveIdentity(ctx context.Context, userID string, provider domain.IdentityProvider, providerUserID string) error
 }
 
@@ -117,4 +118,8 @@ func (s *userService) RemoveIdentity(ctx context.Context, userID string, provide
 		return errors.New("identity does not belong to user")
 	}
 	return s.identities.Delete(ctx, identity)
+}
+
+func (s *userService) ListIdentities(ctx context.Context, userID string) ([]domain.UserIdentity, error) {
+	return s.identities.ListByUser(ctx, userID)
 }

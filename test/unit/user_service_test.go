@@ -68,6 +68,9 @@ func (identityRepoStub) FindByProviderUserID(ctx context.Context, provider domai
 func (identityRepoStub) FindByUserAndProvider(ctx context.Context, userID string, provider domain.IdentityProvider) (*domain.UserIdentity, error) {
 	return nil, errors.New("not found")
 }
+func (identityRepoStub) ListByUser(ctx context.Context, userID string) ([]domain.UserIdentity, error) {
+	return nil, nil
+}
 func (identityRepoStub) Delete(ctx context.Context, identity *domain.UserIdentity) error { return nil }
 
 func TestUserService_UpdateProfile(t *testing.T) {

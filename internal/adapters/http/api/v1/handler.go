@@ -44,6 +44,7 @@ func (h *Handler) RegisterRoutes(g *echo.Group) {
 	g.GET("/:id", h.GetByID)
 	g.PATCH("/me", h.UpdateProfile)
 	g.POST("/me/avatar", h.UploadAvatar)
+	g.GET("/me/identities", h.ListMyIdentities)
 	g.POST("/me/identities", h.AttachIdentity)
 	g.DELETE("/me/identities/:provider/:provider_user_id", h.RemoveIdentity)
 }
@@ -106,6 +107,15 @@ func (h *Handler) RemoveIdentity(c echo.Context) error {
 		return res.ErrorJSON(c, http.StatusBadRequest, "detach_failed", err.Error(), middleware.RequestIDFromCtx(c), nil)
 	}
 	return res.JSON(c, http.StatusOK, map[string]string{"status": "detached"})
+}
+
+func (h *Handler) ListMyIdentities(c echo.Context) error {
+	userID := c.Get("user_id").(string)
+	identities, err := h.users.ListIdentities(c.Request().Context(), userID)
+	if err != nil {
+		return res.ErrorJSON(c, http.StatusInternalServerError, "list_failed", err.Error(), middleware.RequestIDFromCtx(c), nil)
+	}
+	return res.JSON(c, http.StatusOK, map[string]any{"identities": identities})
 }
 
 const maxAvatarSize = 5 * 1024 * 1024

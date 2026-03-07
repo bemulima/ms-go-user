@@ -12,6 +12,7 @@ type UserIdentityRepository interface {
 	Create(ctx context.Context, identity *domain.UserIdentity) error
 	FindByProviderUserID(ctx context.Context, provider domain.IdentityProvider, providerUserID string) (*domain.UserIdentity, error)
 	FindByUserAndProvider(ctx context.Context, userID string, provider domain.IdentityProvider) (*domain.UserIdentity, error)
+	ListByUser(ctx context.Context, userID string) ([]domain.UserIdentity, error)
 	Delete(ctx context.Context, identity *domain.UserIdentity) error
 }
 
@@ -41,6 +42,14 @@ func (r *gormUserIdentityRepository) FindByUserAndProvider(ctx context.Context, 
 		return nil, err
 	}
 	return &identity, nil
+}
+
+func (r *gormUserIdentityRepository) ListByUser(ctx context.Context, userID string) ([]domain.UserIdentity, error) {
+	var identities []domain.UserIdentity
+	if err := r.db.WithContext(ctx).Where("user_id = ?", userID).Order("created_at DESC").Find(&identities).Error; err != nil {
+		return nil, err
+	}
+	return identities, nil
 }
 
 func (r *gormUserIdentityRepository) Delete(ctx context.Context, identity *domain.UserIdentity) error {
