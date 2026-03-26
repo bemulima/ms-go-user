@@ -17,6 +17,7 @@ import (
 type (
 	// UserManageService exposes administrative operations over users.
 	UserManageService interface {
+		GetUser(ctx context.Context, userID string) (*domain.User, error)
 		CreateUser(ctx context.Context, req CreateUserRequest) (*domain.User, error)
 		UpdateUser(ctx context.Context, userID string, req UpdateUserRequest) (*domain.User, error)
 		ChangeStatus(ctx context.Context, userID string, status domain.UserStatus) (*domain.User, error)
@@ -49,6 +50,10 @@ type userManageService struct {
 
 func NewUserManageService(users repo.UserRepository, profiles repo.UserProfileRepository, rbacClient rbac.Client) UserManageService {
 	return &userManageService{users: users, profiles: profiles, rbac: rbacClient}
+}
+
+func (s *userManageService) GetUser(ctx context.Context, userID string) (*domain.User, error) {
+	return s.users.FindByID(ctx, userID)
 }
 
 func (s *userManageService) CreateUser(ctx context.Context, req CreateUserRequest) (*domain.User, error) {

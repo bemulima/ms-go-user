@@ -91,11 +91,11 @@ fi
 echo "[+] Uploaded file_id=$FILE_ID"
 
 echo "[+] Forcing variant generation..."
-docker compose -p ${PROJECT}-user -f "${USER_DIR}/docker-compose.yml" exec -T nginx sh -c "curl -s -f -X POST http://host.docker.internal:8084/admin/images/${FILE_ID}/variants/generate -H 'Content-Type: application/json' -d '{\"preset_group\":\"avatar\",\"owner_id\":\"11111111-1111-1111-1111-111111111111\",\"file_kind\":\"USER_MEDIA\"}'" >/tmp/variant-gen.json
+docker compose -p ${PROJECT}-user -f "${USER_DIR}/docker-compose.yml" exec -T nginx sh -c "curl -s -f -X POST http://host.docker.internal:8084/admin/v1/images/${FILE_ID}/variants/generate -H 'Content-Type: application/json' -d '{\"preset_group\":\"avatar\",\"owner_id\":\"11111111-1111-1111-1111-111111111111\",\"file_kind\":\"USER_MEDIA\"}'" >/tmp/variant-gen.json
 cat /tmp/variant-gen.json
 
 echo "[+] Checking variants..."
-VARIANTS=$(docker compose -p ${PROJECT}-user -f "${USER_DIR}/docker-compose.yml" exec -T nginx sh -c "curl -s -f http://host.docker.internal:8084/admin/images/${FILE_ID}/variants" || true)
+VARIANTS=$(docker compose -p ${PROJECT}-user -f "${USER_DIR}/docker-compose.yml" exec -T nginx sh -c "curl -s -f http://host.docker.internal:8084/admin/v1/images/${FILE_ID}/variants" || true)
 COUNT=$(echo "$VARIANTS" | jq '.variants | length')
 if [[ "$COUNT" -lt 1 ]]; then
   echo "[-] Variants not created: $VARIANTS"

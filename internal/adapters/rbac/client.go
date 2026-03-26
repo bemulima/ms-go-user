@@ -50,7 +50,7 @@ func (c *httpClient) GetRoleByUserID(ctx context.Context, userID string) (string
 	var resp struct {
 		Role string `json:"role"`
 	}
-	if err := c.get(ctx, "/get_role_by_user_id", url.Values{"user_id": {userID}}, &resp); err != nil {
+	if err := c.get(ctx, "/principal-role/get", url.Values{"user_id": {userID}}, &resp); err != nil {
 		return "", err
 	}
 	return resp.Role, nil
@@ -60,7 +60,7 @@ func (c *httpClient) GetPermissionsByUserID(ctx context.Context, userID string) 
 	var resp struct {
 		Permissions []string `json:"permissions"`
 	}
-	if err := c.get(ctx, "/get_permissions_by_user_id_for_role", url.Values{"user_id": {userID}}, &resp); err != nil {
+	if err := c.get(ctx, "/principal-permission/list", url.Values{"user_id": {userID}}, &resp); err != nil {
 		return nil, err
 	}
 	return resp.Permissions, nil
@@ -70,7 +70,7 @@ func (c *httpClient) CheckPermission(ctx context.Context, userID, permission str
 	var resp struct {
 		Allowed bool `json:"allowed"`
 	}
-	if err := c.get(ctx, "/check_permission_by_user_id", url.Values{"user_id": {userID}, "permission": {permission}}, &resp); err != nil {
+	if err := c.get(ctx, "/principal-permission/get-by-permission", url.Values{"user_id": {userID}, "permission": {permission}}, &resp); err != nil {
 		return false, err
 	}
 	return resp.Allowed, nil
@@ -80,7 +80,7 @@ func (c *httpClient) CheckRole(ctx context.Context, userID, role string) (bool, 
 	var resp struct {
 		Allowed bool `json:"allowed"`
 	}
-	if err := c.get(ctx, "/check_role_by_user_id", url.Values{"user_id": {userID}, "role": {role}}, &resp); err != nil {
+	if err := c.get(ctx, "/principal-role/get-by-role", url.Values{"user_id": {userID}, "role": {role}}, &resp); err != nil {
 		return false, err
 	}
 	return resp.Allowed, nil
@@ -93,7 +93,7 @@ func (c *httpClient) AssignRole(ctx context.Context, userID, role string) error 
 			"role":    role,
 		},
 	}
-	return c.post(ctx, "/assign_role", payload)
+	return c.sendJSON(ctx, http.MethodPatch, "/principal-role/update", payload)
 }
 
 func (c *httpClient) get(ctx context.Context, path string, params url.Values, out interface{}) error {
@@ -124,13 +124,13 @@ func (c *httpClient) get(ctx context.Context, path string, params url.Values, ou
 	return backoff.Retry(op, backoff.WithContext(bo, ctx))
 }
 
-func (c *httpClient) post(ctx context.Context, path string, payload interface{}) error {
+func (c *httpClient) sendJSON(ctx context.Context, method, path string, payload interface{}) error {
 	op := func() error {
 		body, err := json.Marshal(payload)
 		if err != nil {
 			return backoff.Permanent(err)
 		}
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("%s%s", c.baseURL, path), bytes.NewReader(body))
+		req, err := http.NewRequestWithContext(ctx, method, fmt.Sprintf("%s%s", c.baseURL, path), bytes.NewReader(body))
 		if err != nil {
 			return backoff.Permanent(err)
 		}

@@ -43,7 +43,7 @@ func (c *httpClient) Generate(ctx context.Context, originalID, ownerID, fileKind
 		FileKind:    fileKind,
 	}
 	payload, _ := json.Marshal(body)
-	url := c.baseURL + path.Join("/admin/images", originalID, "variants/generate")
+	url := c.baseURL + path.Join("/admin/v1/images", originalID, "variants/generate")
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(payload))
 	if err != nil {
 		return err

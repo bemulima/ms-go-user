@@ -89,7 +89,7 @@
       "testScript": "",
       "body": {
         "contentType": "application/json",
-        "body": "{\n  \"display_name\": \"User\",\n  \"avatar_url\": \"https://example.com/avatar.png\"\n}"
+        "body": "{\n  \"display_name\": \"User\"\n}"
       },
       "requestVariables": [],
       "responses": {}

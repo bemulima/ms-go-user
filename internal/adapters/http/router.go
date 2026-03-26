@@ -43,5 +43,4 @@ func (r *Router) Setup(e *echo.Echo) {
 
 	adminGroup := e.Group("/admin/v1/users", r.authMW.Handler, r.rbacMW.RequireAnyRole("admin", "moderator"))
 	adminv1.RegisterRoutes(adminGroup, r.adminHandler)
-	adminGroup.GET("/:id", r.apiHandler.GetByID)
 }

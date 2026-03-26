@@ -60,10 +60,17 @@ paths:
   /users/me:
     get:
       security: [{bearerAuth: []}]
+      summary: Get current user profile with masked email
       responses:
-        "200": {description: Profile}
+        "200":
+          description: Profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfileView"
     patch:
       security: [{bearerAuth: []}]
+      summary: Update current user profile
       requestBody:
         content:
           application/json:
@@ -71,12 +78,76 @@ paths:
               type: object
               properties:
                 display_name: {type: string}
-                avatar_url: {type: string}
       responses:
-        "200": {description: Updated}
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+  /users/{id}:
+    get:
+      security: [{bearerAuth: []}]
+      summary: Get user profile by id with masked email
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicUserProfileView"
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
+  schemas:
+    UserProfile:
+      type: object
+      required: [id, user_id, created_at, updated_at]
+      properties:
+        id: {type: string, format: uuid}
+        user_id: {type: string, format: uuid}
+        display_name: {type: string, nullable: true}
+        avatar_file_id: {type: string, format: uuid, nullable: true}
+        avatar_url: {type: string, nullable: true}
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+    UserProfileView:
+      type: object
+      required: [id, email, created_at, updated_at]
+      properties:
+        id: {type: string, format: uuid}
+        email:
+          type: string
+          description: Masked email value
+          example: u****@***e.com
+        status: {type: string}
+        is_active: {type: boolean}
+        display_name: {type: string, nullable: true}
+        avatar_file_id: {type: string, format: uuid, nullable: true}
+        avatar_url: {type: string, nullable: true}
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+    PublicUserProfileView:
+      type: object
+      required: [id, email, created_at, updated_at]
+      properties:
+        id: {type: string, format: uuid}
+        email:
+          type: string
+          description: Masked email value
+          example: u****@***e.com
+        display_name: {type: string, nullable: true}
+        avatar_file_id: {type: string, format: uuid, nullable: true}
+        avatar_url: {type: string, nullable: true}
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}

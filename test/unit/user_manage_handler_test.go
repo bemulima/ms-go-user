@@ -180,11 +180,19 @@ func TestUserManageHandler_ChangeRole_Error(t *testing.T) {
 }
 
 type mockManageService struct {
+	getUserFn      func(ctx context.Context, userID string) (*domain.User, error)
 	createUserFn   func(ctx context.Context, req service.CreateUserRequest) (*domain.User, error)
 	updateUserFn   func(ctx context.Context, userID string, req service.UpdateUserRequest) (*domain.User, error)
 	changeStatusFn func(ctx context.Context, userID string, status domain.UserStatus) (*domain.User, error)
 	changeRoleFn   func(ctx context.Context, userID, role string) error
 	listUsersFn    func(ctx context.Context, offset, limit int) ([]domain.User, int64, error)
+}
+
+func (m *mockManageService) GetUser(ctx context.Context, userID string) (*domain.User, error) {
+	if m.getUserFn != nil {
+		return m.getUserFn(ctx, userID)
+	}
+	return nil, nil
 }
 
 func (m *mockManageService) CreateUser(ctx context.Context, req service.CreateUserRequest) (*domain.User, error) {

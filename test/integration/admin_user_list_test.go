@@ -51,6 +51,10 @@ type manageServiceStub struct {
 	listUsersFn func(ctx context.Context, offset, limit int) ([]domain.User, int64, error)
 }
 
+func (s *manageServiceStub) GetUser(ctx context.Context, userID string) (*domain.User, error) {
+	return nil, errors.New("not implemented")
+}
+
 func (s *manageServiceStub) CreateUser(ctx context.Context, req service.CreateUserRequest) (*domain.User, error) {
 	return nil, errors.New("not implemented")
 }

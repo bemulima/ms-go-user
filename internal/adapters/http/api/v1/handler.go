@@ -1,9 +1,11 @@
 package v1
 
 import (
+	"encoding/json"
 	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/labstack/echo/v4"
 
@@ -31,6 +33,28 @@ type updateProfileRequest struct {
 	DisplayName *string `json:"display_name"`
 }
 
+type userResponse struct {
+	ID           string             `json:"id"`
+	Email        string             `json:"email"`
+	Status       *domain.UserStatus `json:"status,omitempty"`
+	IsActive     *bool              `json:"is_active,omitempty"`
+	DisplayName  *string            `json:"display_name,omitempty"`
+	AvatarFileID *string            `json:"avatar_file_id,omitempty"`
+	AvatarURL    *string            `json:"avatar_url,omitempty"`
+	CreatedAt    time.Time          `json:"created_at"`
+	UpdatedAt    time.Time          `json:"updated_at"`
+}
+
+type profileResponse struct {
+	ID           string    `json:"id"`
+	UserID       string    `json:"user_id"`
+	DisplayName  *string   `json:"display_name,omitempty"`
+	AvatarFileID *string   `json:"avatar_file_id,omitempty"`
+	AvatarURL    *string   `json:"avatar_url,omitempty"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+}
+
 type attachIdentityRequest struct {
 	Provider       string  `json:"provider"`
 	ProviderUserID string  `json:"provider_user_id"`
@@ -55,11 +79,7 @@ func (h *Handler) GetMe(c echo.Context) error {
 	if err != nil {
 		return res.ErrorJSON(c, http.StatusNotFound, "not_found", "user not found", middleware.RequestIDFromCtx(c), nil)
 	}
-	decorated := h.decorateUser(user)
-	if decorated != nil {
-		decorated.Email = maskEmail(decorated.Email)
-	}
-	return res.JSON(c, http.StatusOK, decorated)
+	return res.JSON(c, http.StatusOK, h.newSelfUserResponse(user))
 }
 
 func (h *Handler) GetByID(c echo.Context) error {
@@ -69,12 +89,17 @@ func (h *Handler) GetByID(c echo.Context) error {
 	if err != nil {
 		return res.ErrorJSON(c, http.StatusNotFound, "not_found", "user not found", middleware.RequestIDFromCtx(c), nil)
 	}
-	return res.JSON(c, http.StatusOK, h.decorateUser(user))
+	return res.JSON(c, http.StatusOK, h.newPublicUserResponse(user))
 }
 
 func (h *Handler) UpdateProfile(c echo.Context) error {
-	req := new(updateProfileRequest)
-	if err := c.Bind(req); err != nil {
+	var req updateProfileRequest
+	decoder := json.NewDecoder(c.Request().Body)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&req); err != nil {
+		return res.ErrorJSON(c, http.StatusBadRequest, "bad_request", "invalid payload", middleware.RequestIDFromCtx(c), nil)
+	}
+	if decoder.More() {
 		return res.ErrorJSON(c, http.StatusBadRequest, "bad_request", "invalid payload", middleware.RequestIDFromCtx(c), nil)
 	}
 	userID := c.Get("user_id").(string)
@@ -82,7 +107,7 @@ func (h *Handler) UpdateProfile(c echo.Context) error {
 	if err != nil {
 		return res.ErrorJSON(c, http.StatusInternalServerError, "update_failed", err.Error(), middleware.RequestIDFromCtx(c), nil)
 	}
-	return res.JSON(c, http.StatusOK, h.decorateProfile(profile))
+	return res.JSON(c, http.StatusOK, h.newProfileResponse(profile))
 }
 
 func (h *Handler) AttachIdentity(c echo.Context) error {
@@ -180,18 +205,64 @@ func (h *Handler) UploadAvatar(c echo.Context) error {
 		"file_id":         uploadResp.ID,
 		"download_url":    downloadURL,
 		"signed_url":      signedURL,
-		"profile":         h.decorateProfile(profile),
+		"profile":         h.newProfileResponse(profile),
 		"processing_mode": processingMode,
 	}
 	return res.JSON(c, http.StatusCreated, response)
 }
 
-func (h *Handler) decorateUser(user *domain.User) *domain.User {
+func (h *Handler) newSelfUserResponse(user *domain.User) *userResponse {
+	return h.newUserResponse(user, true)
+}
+
+func (h *Handler) newPublicUserResponse(user *domain.User) *userResponse {
+	return h.newUserResponse(user, false)
+}
+
+func (h *Handler) newUserResponse(user *domain.User, includeStatus bool) *userResponse {
 	if user == nil {
 		return nil
 	}
-	user.Profile = h.decorateProfile(user.Profile)
-	return user
+
+	profile := h.newProfileResponse(user.Profile)
+	response := &userResponse{
+		ID:        user.ID,
+		Email:     maskEmail(user.Email),
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+	}
+
+	if includeStatus {
+		status := user.StatusOrDefault()
+		isActive := user.IsActive
+		response.Status = &status
+		response.IsActive = &isActive
+	}
+
+	if profile != nil {
+		response.DisplayName = profile.DisplayName
+		response.AvatarFileID = profile.AvatarFileID
+		response.AvatarURL = profile.AvatarURL
+	}
+
+	return response
+}
+
+func (h *Handler) newProfileResponse(profile *domain.UserProfile) *profileResponse {
+	profile = h.decorateProfile(profile)
+	if profile == nil {
+		return nil
+	}
+
+	return &profileResponse{
+		ID:           profile.ID,
+		UserID:       profile.UserID,
+		DisplayName:  profile.DisplayName,
+		AvatarFileID: profile.AvatarFileID,
+		AvatarURL:    profile.AvatarURL,
+		CreatedAt:    profile.CreatedAt,
+		UpdatedAt:    profile.UpdatedAt,
+	}
 }
 
 func (h *Handler) decorateProfile(profile *domain.UserProfile) *domain.UserProfile {

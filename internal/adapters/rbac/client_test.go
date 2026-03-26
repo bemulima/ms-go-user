@@ -18,8 +18,8 @@ func TestHTTPClient_AssignRole(t *testing.T) {
 	client := &httpClient{
 		baseURL: "http://rbac-service",
 		client: newMockHTTPClient(func(req *http.Request) (*http.Response, error) {
-			require.Equal(t, http.MethodPost, req.Method)
-			require.Equal(t, "/assign_role", req.URL.Path)
+			require.Equal(t, http.MethodPatch, req.Method)
+			require.Equal(t, "/principal-role/update", req.URL.Path)
 			require.NoError(t, json.NewDecoder(req.Body).Decode(&payload))
 			return &http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(strings.NewReader(""))}, nil
 		}),
@@ -41,7 +41,7 @@ func TestHTTPClient_GetRoleByUserID(t *testing.T) {
 		baseURL: "http://rbac-service",
 		client: newMockHTTPClient(func(req *http.Request) (*http.Response, error) {
 			require.Equal(t, http.MethodGet, req.Method)
-			require.Equal(t, "/get_role_by_user_id", req.URL.Path)
+			require.Equal(t, "/principal-role/get", req.URL.Path)
 			require.Equal(t, "user-789", req.URL.Query().Get("user_id"))
 			body := `{"role":"` + expectedRole + `"}`
 			return &http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(strings.NewReader(body))}, nil
