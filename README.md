@@ -1,6 +1,6 @@
 # User Service
 
-Production-ready Go microservice implementing user management with Clean Architecture, Echo, GORM, RabbitMQ, and OAuth integrations.
+Production-ready Go microservice implementing user management with Clean Architecture, Echo, GORM, retained NATS RPC, and OAuth integrations.
 
 ## Features
 
@@ -8,11 +8,17 @@ Production-ready Go microservice implementing user management with Clean Archite
 - Classic and OAuth2 (Google/GitHub) authentication with JWT issuance
 - RBAC integration for role and permission checks
 - Postgres persistence via GORM with UUID primary keys
-- RabbitMQ or NATS event publication for user lifecycle events (configurable via `MESSAGE_BROKER`)
+- Retained messaging role: NATS RPC for user/auth/RBAC coordination
 - Clean Architecture layering (domain, usecase, port contracts, adapters, app)
 - Structured logging, request ID propagation, CORS, health check, and graceful shutdown
-- Docker Compose stack with Postgres, RabbitMQ, Nginx
+- Docker Compose stack with Postgres and Nginx; shared NATS is provided by the infra messaging stack
 - TDD-first unit and integration tests using `go test`
+
+## Messaging Status
+
+- Supported target transports for this service are HTTP and retained NATS RPC.
+- Retained Core NATS RPC for this service is limited to `user.create-user`, which is a mutating request/reply subject and must stay idempotent under retries and queue-group-safe under multi-instance deployment.
+- RabbitMQ has been physically removed from this service. The service no longer supports RabbitMQ as a transport choice.
 
 ## Getting Started
 
@@ -68,11 +74,11 @@ internal/domain/              # domain entities and value objects
 internal/usecase/             # business logic (auth, user, manage)
 internal/adapters/http/        # Echo router, handlers, middleware
 internal/adapters/postgres/    # GORM repositories
-internal/adapters/{rbac,broker,filestorage,imageprocessor,tarantool}/ # external clients
+internal/adapters/{rbac,filestorage,imageprocessor,tarantool}/ # external clients
 internal/app/                 # composition root / DI
 pkg/                          # shared utility packages (logging, HTTP helpers)
 migrations/                   # database migrations
 test/                         # unit and integration tests
 ```
 
-Layering rules: `usecase` depends only on `domain` + `port`-like interfaces; adapters implement those interfaces and are wired in `app`. HTTP and broker transports stay under `internal/adapters`.
+Layering rules: `usecase` depends only on `domain` + `port`-like interfaces; adapters implement those interfaces and are wired in `app`. HTTP and retained NATS RPC transports stay under `internal/adapters`.

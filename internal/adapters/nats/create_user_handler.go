@@ -53,6 +53,13 @@ func (h *CreateUserHandler) Handle(msg *natsgo.Msg) {
 	}
 	user.Email = strings.TrimSpace(req.Email)
 	if err := h.users.Create(ctx, user); err != nil {
+		// Retained mutating RPC must stay retry-safe. A concurrent duplicate
+		// create for the same user ID is treated as a successful idempotent
+		// replay instead of surfacing a false-negative error to the caller.
+		if existing, findErr := h.users.FindByID(ctx, req.ID); findErr == nil && existing != nil {
+			Respond(msg, map[string]interface{}{"ok": true})
+			return
+		}
 		Respond(msg, map[string]interface{}{"ok": false, "error": err.Error()})
 		return
 	}

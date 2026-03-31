@@ -9,7 +9,7 @@
 - `make deps` installs `air` and `golangci-lint`, then tidies `go.mod`/`go.sum`.
 - `make lint` runs `golangci-lint run ./...`; `make test` executes `go test ./...`.
 - `make run` starts the service locally via `APP_ENV=local go run ./cmd/user-service`.
-- Use `make docker-up|docker-down|docker-logs` to manage the Compose stack (Postgres, RabbitMQ, Nginx).
+- Use `make docker-up|docker-down|docker-logs` to manage the Compose stack. The app compose starts Postgres and Nginx; shared NATS comes from the infra messaging stack.
 - `make migrate-up` and `migrate-down` call `migrate` with `.env` credentials against `migrations/`.
 
 ## Coding Style & Naming Conventions
@@ -30,5 +30,5 @@
 - PRs should describe what changed, highlight migrations/configuration updates, mention manual test steps, and link related issues. Add screenshots if HTTP responses or logging behavior change.
 
 ## Configuration & Security Tips
-- Create `.env` from `.env.example` and guard secrets (`DB_*`, `JWT_*`, `RABBITMQ_*`, OAuth keys). Do not commit credentials.
-- Use `docker compose` commands from the repo root so networking matches production (Postgres, RabbitMQ, Nginx). Respect `X-Request-ID` propagation if testing middleware.
+- Create `.env` from `.env.example` and guard secrets (`DB_*`, `JWT_*`, OAuth keys). Do not commit credentials.
+- Use `docker compose` commands from the repo root so networking matches production-like local runs (Postgres and Nginx here, shared NATS from infra/messaging). Respect `X-Request-ID` propagation if testing middleware.

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 
@@ -16,7 +15,6 @@ import (
 	"gorm.io/gorm/schema"
 
 	"github.com/example/user-service/config"
-	"github.com/example/user-service/internal/adapters/broker"
 	"github.com/example/user-service/internal/adapters/filestorage"
 	httpadapter "github.com/example/user-service/internal/adapters/http"
 	adminv1 "github.com/example/user-service/internal/adapters/http/admin/v1"
@@ -31,12 +29,11 @@ import (
 )
 
 type App struct {
-	cfg       *config.Config
-	logger    pkglog.Logger
-	db        *gorm.DB
-	publisher broker.Publisher
-	echo      *echo.Echo
-	natsConn  *nats.Conn
+	cfg      *config.Config
+	logger   pkglog.Logger
+	db       *gorm.DB
+	echo     *echo.Echo
+	natsConn *nats.Conn
 }
 
 func New(ctx context.Context) (*App, error) {
@@ -57,27 +54,12 @@ func New(ctx context.Context) (*App, error) {
 	rbacHTTP := rbacclient.NewHTTPClient(cfg.RBACURL, 3*time.Second)
 	rbacClient := rbacclient.NewCachingClient(rbacHTTP, time.Minute)
 
-	var publisher broker.Publisher
 	var natsConn *nats.Conn
-	switch cfg.MessageBroker {
-	case "nats":
-		publisher, err = broker.NewNATSPublisher(cfg.NATSURL)
-		if err != nil {
-			log.Printf("nats init failed: %v", err)
-		}
-		natsConn, _ = nats.Connect(cfg.NATSURL)
-	default:
-		publisher, err = broker.NewRabbitMQPublisher(cfg.RabbitMQURL, cfg.RabbitMQExchange)
-		if err != nil {
-			log.Printf("rabbitmq init failed: %v", err)
-		}
-	}
-	if natsConn == nil && cfg.NATSURL != "" {
-		// Connect to NATS for RBAC role checks even when RabbitMQ is used as the primary broker.
+	if cfg.NATSURL != "" {
 		if conn, err := nats.Connect(cfg.NATSURL); err == nil {
 			natsConn = conn
 		} else {
-			log.Printf("nats connection for rbac failed: %v", err)
+			return nil, fmt.Errorf("connect nats: %w", err)
 		}
 	}
 
@@ -109,7 +91,7 @@ func New(ctx context.Context) (*App, error) {
 		_ = rpc.Subscribe(cfg.NATSUserCreate, "ms-go-user", createHandler.Handle)
 	}
 
-	return &App{cfg: cfg, logger: logger, db: db, publisher: publisher, echo: e, natsConn: natsConn}, nil
+	return &App{cfg: cfg, logger: logger, db: db, echo: e, natsConn: natsConn}, nil
 }
 
 func (a *App) Run(ctx context.Context) error {
@@ -135,9 +117,6 @@ func (a *App) Run(ctx context.Context) error {
 }
 
 func (a *App) Close() {
-	if a.publisher != nil {
-		_ = a.publisher.Close()
-	}
 	if a.natsConn != nil {
 		_ = a.natsConn.Drain()
 	}

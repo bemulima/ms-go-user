@@ -47,11 +47,8 @@ type Config struct {
 	TarantoolURL string `env:"MS_TARANTOOL_URL"`
 	RBACURL      string `env:"MS_RBAC"`
 
-	MessageBroker    string `env:"MESSAGE_BROKER" envDefault:"rabbitmq"`
-	NATSURL          string `env:"NATS_URL" envDefault:"nats://localhost:4222"`
-	NATSUserCreate   string `env:"NATS_SUBJECT_USER_CREATE" envDefault:"user.create-user"`
-	RabbitMQURL      string `env:"RABBITMQ_URL" envDefault:"amqp://guest:guest@localhost:5672/"`
-	RabbitMQExchange string `env:"RABBITMQ_EXCHANGE" envDefault:"users"`
+	NATSURL        string `env:"NATS_URL" envDefault:"nats://localhost:4222"`
+	NATSUserCreate string `env:"NATS_SUBJECT_USER_CREATE" envDefault:"user.create-user"`
 
 	CORSAllowOrigins string `env:"CORS_ALLOW_ORIGINS" envDefault:"*"`
 	RateLimitPerMin  int    `env:"RATE_LIMIT_PER_MIN" envDefault:"120"`
