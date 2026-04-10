@@ -1,3 +1,4 @@
+.env
 .gocache
 .cache
 docker-compose.override.yml
