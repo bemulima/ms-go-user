@@ -82,7 +82,7 @@ unauth_raw="$(http_json GET "${USER_API}/me")"
 unauth_status="$(printf '%s\n' "${unauth_raw}" | extract_status)"
 unauth_resp="$(printf '%s\n' "${unauth_raw}" | extract_body)"
 if [[ "${unauth_status}" != "401" ]]; then
-  record_mismatch "ms-go-user" "${wiki_ref} (GET /users/me)" "HTTP 401 без токена" "HTTP ${unauth_status}" "GET ${USER_API}/me (no auth) resp=${unauth_resp}" "major" "ms-go-user/ms-getway"
+  record_mismatch "ms-go-user" "${wiki_ref} (GET /users/me)" "HTTP 401 без токена" "HTTP ${unauth_status}" "GET ${USER_API}/me (no auth) resp=${unauth_resp}" "major" "ms-go-user/ms-gateway"
 else
   record_ok "user /me without token returns 401"
 fi
