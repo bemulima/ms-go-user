@@ -40,7 +40,7 @@ code="$(curl -sS --max-time "${HTTP_TIMEOUT}" \
 resp="$(cat "${tmp_resp}")"
 
 if [[ "${code}" != "201" ]]; then
-  record_mismatch "ms-go-user" "${wiki_ref}" "HTTP 201" "HTTP ${code}" "POST ${USER_API}/me/avatar resp=${resp}" "blocker" "ms-go-user/ms-go-filestorage/ms-go-image-processor/ms-getway"
+  record_mismatch "ms-go-user" "${wiki_ref}" "HTTP 201" "HTTP ${code}" "POST ${USER_API}/me/avatar resp=${resp}" "blocker" "ms-go-user/ms-go-filestorage/ms-go-image-processor/ms-gateway"
   return 0
 fi
 

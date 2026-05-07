@@ -18,7 +18,7 @@ st="$(printf '%s\n' "${raw}" | extract_status)"
 resp="$(printf '%s\n' "${raw}" | extract_body)"
 
 if [[ "${st}" != "200" ]]; then
-  record_mismatch "ms-go-user" "${wiki_ref}" "HTTP 200" "HTTP ${st}" "PATCH ${USER_API}/me resp=${resp}" "blocker" "ms-go-user/ms-getway"
+  record_mismatch "ms-go-user" "${wiki_ref}" "HTTP 200" "HTTP ${st}" "PATCH ${USER_API}/me resp=${resp}" "blocker" "ms-go-user/ms-gateway"
   return 0
 fi
 
