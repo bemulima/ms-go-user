@@ -74,3 +74,9 @@ git-backed repositories under `/Users/marat/Developments/microservices`.
 ## Configuration & Security Tips
 - Create `.env` from `.env.example` and guard secrets (`DB_*`, `JWT_*`, OAuth keys). Do not commit credentials.
 - Use `docker compose` commands from the repo root so networking matches production-like local runs (Postgres and Nginx here, shared NATS from infra/messaging). Respect `X-Request-ID` propagation if testing middleware.
+
+<!-- agent-orchestrator:start -->
+## Agent Orchestrator (Managed)
+
+Read `.ai/service.yaml` before repository work. Follow every linked repository instruction and prompt. Do not edit files outside an explicitly approved write scope.
+<!-- agent-orchestrator:end -->

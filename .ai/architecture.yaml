@@ -1,0 +1,140 @@
+schema_version: 1
+stack:
+    - name: framework
+      value: echo
+      confidence: 0.98
+      source_path: go.mod
+      explanation: go.mod declares dependency github.com/labstack/echo.
+    - name: framework
+      value: nats
+      confidence: 0.98
+      source_path: go.mod
+      explanation: go.mod declares dependency github.com/nats-io/nats.go.
+    - name: framework
+      value: pgx
+      confidence: 0.98
+      source_path: go.mod
+      explanation: go.mod declares dependency github.com/jackc/pgx.
+    - name: language
+      value: go
+      confidence: 1
+      source_path: go.mod
+      explanation: go.mod is the canonical Go module manifest.
+    - name: orchestration
+      value: docker_compose
+      confidence: 0.98
+      source_path: docker-compose.yml
+      explanation: A Docker Compose manifest defines local infrastructure or runtime services.
+ownership:
+    - name: database_table
+      value: user_identity
+      confidence: 0.96
+      source_path: migrations/0002_user_identity_and_provider.up.sql
+      explanation: A checked-in SQL schema file creates this table, indicating schema ownership.
+    - name: database_table
+      value: user_profile
+      confidence: 0.96
+      source_path: migrations/0001_init.up.sql
+      explanation: A checked-in SQL schema file creates this table, indicating schema ownership.
+    - name: database_table
+      value: user_provider
+      confidence: 0.96
+      source_path: migrations/0002_user_identity_and_provider.up.sql
+      explanation: A checked-in SQL schema file creates this table, indicating schema ownership.
+    - name: database_table
+      value: user
+      confidence: 0.96
+      source_path: migrations/0001_init.up.sql
+      explanation: A checked-in SQL schema file creates this table, indicating schema ownership.
+    - name: domain_entity
+      value: UserIdentity
+      confidence: 0.93
+      source_path: internal/domain/user_identity.go
+      explanation: Semantic proposal with a verified repository quote. Production domain code defines the UserIdentity domain entity.
+    - name: domain_entity
+      value: UserProfile
+      confidence: 0.93
+      source_path: internal/domain/user_profile.go
+      explanation: Semantic proposal with a verified repository quote. Production domain code defines the UserProfile domain entity.
+    - name: domain_entity
+      value: UserProvider
+      confidence: 0.93
+      source_path: internal/domain/user_provider.go
+      explanation: Semantic proposal with a verified repository quote. Production domain code defines the UserProvider domain entity.
+    - name: domain_entity
+      value: User
+      confidence: 0.93
+      source_path: internal/domain/user.go
+      explanation: Semantic proposal with a verified repository quote. Production domain code defines the User domain entity.
+relations:
+    - name: depends_on
+      value: postgres
+      confidence: 0.9
+      source_path: docker-compose.yml
+      explanation: Docker Compose declares this service dependency.
+    - name: depends_on
+      value: user-service
+      confidence: 0.9
+      source_path: docker-compose.yml
+      explanation: Docker Compose declares this service dependency.
+infrastructure:
+    - name: compose_service
+      value: nginx=nginx:1.25-alpine
+      confidence: 0.96
+      source_path: docker-compose.yml
+      explanation: Docker Compose declares this service.
+    - name: compose_service
+      value: postgres=postgres:16-alpine
+      confidence: 0.96
+      source_path: docker-compose.yml
+      explanation: Docker Compose declares this service.
+    - name: compose_service
+      value: user-service
+      confidence: 0.96
+      source_path: docker-compose.yml
+      explanation: Docker Compose declares this service.
+    - name: dependency identifier
+      value: Echo
+      confidence: 0.95
+      source_path: internal/app/app.go
+      explanation: Semantic proposal with a verified repository quote. The production HTTP server is built with Echo.
+    - name: dependency identifier
+      value: NATS
+      confidence: 0.95
+      source_path: internal/app/app.go
+      explanation: Semantic proposal with a verified repository quote. The production composition root directly connects to NATS.
+    - name: dependency identifier
+      value: PostgreSQL
+      confidence: 0.95
+      source_path: internal/app/app.go
+      explanation: Semantic proposal with a verified repository quote. The production composition root opens a PostgreSQL-backed GORM connection.
+    - name: dependency identifier
+      value: gcr.io/distroless/base-debian12
+      confidence: 0.95
+      source_path: build/docker/Dockerfile
+      explanation: Semantic proposal with a verified repository quote. The Dockerfile declares the runtime base image.
+    - name: dependency identifier
+      value: golang:1.24-alpine
+      confidence: 0.95
+      source_path: build/docker/Dockerfile
+      explanation: Semantic proposal with a verified repository quote. The Dockerfile declares the build-stage base image.
+    - name: dependency identifier
+      value: ms-net external Docker network
+      confidence: 0.95
+      source_path: docker-compose.yml
+      explanation: Semantic proposal with a verified repository quote. Compose requires an externally managed network.
+    - name: dependency identifier
+      value: nginx:1.25-alpine
+      confidence: 0.95
+      source_path: docker-compose.yml
+      explanation: Semantic proposal with a verified repository quote. Compose declares an Nginx service and image.
+    - name: dependency identifier
+      value: postgres:16-alpine
+      confidence: 0.95
+      source_path: docker-compose.yml
+      explanation: Semantic proposal with a verified repository quote. Compose declares the local PostgreSQL service and image.
+    - name: dependency identifier
+      value: user-service container
+      confidence: 0.95
+      source_path: docker-compose.yml
+      explanation: Semantic proposal with a verified repository quote. Compose builds the service from the checked-in Dockerfile.

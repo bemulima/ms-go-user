@@ -1,0 +1,56 @@
+schema_version: 1
+commands:
+    - name: compose_logs
+      run: make docker-logs
+      source_path: README.md
+      confidence: 0.93
+      requires_approval: true
+      risk: lifecycle
+    - name: install_dependencies
+      run: make deps
+      source_path: README.md
+      confidence: 0.93
+      requires_approval: true
+      risk: lifecycle
+    - name: lint
+      run: make lint
+      source_path: README.md
+      confidence: 0.93
+      requires_approval: false
+      risk: verification
+    - name: migrate-down
+      run: make migrate-down
+      source_path: Makefile
+      confidence: 0.92
+      requires_approval: true
+      risk: state_change
+    - name: migrate-up
+      run: make migrate-up
+      source_path: Makefile
+      confidence: 0.92
+      requires_approval: true
+      risk: state_change
+    - name: run_service
+      run: make run
+      source_path: README.md
+      confidence: 0.93
+      requires_approval: true
+      risk: lifecycle
+    - name: start_compose_stack
+      run: make docker-up
+      source_path: README.md
+      confidence: 0.93
+      requires_approval: true
+      risk: lifecycle
+    - name: stop_compose_stack
+      run: make docker-down
+      source_path: README.md
+      confidence: 0.93
+      requires_approval: true
+      risk: state_change
+    - name: test
+      run: make test
+      source_path: README.md
+      confidence: 0.93
+      requires_approval: false
+      risk: verification
