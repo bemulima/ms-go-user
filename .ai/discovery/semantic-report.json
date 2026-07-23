@@ -1,0 +1,737 @@
+{
+  "schema_version": 1,
+  "project_id": "b520c3f1-0753-4f4f-9dd7-623a99d16f61",
+  "project_name": "ms-go-user",
+  "base_commit": "f3da9126980145c7e4a830ce200c7093cb56a4c1",
+  "summary": "The repository implements a Go user-management backend with authenticated profile/identity APIs, admin user operations, PostgreSQL persistence, HTTP integrations, and retained NATS request/reply messaging. The strongest onboarding risks are documentation/runtime route drift, dormant Tarantool and UserProvider code, inconsistent role casing, an apparently broken Taskfile run path, and unclear password ownership after the auth split.",
+  "facts": [
+    {
+      "category": "business_process",
+      "name": "admin_create_user",
+      "value": "Create user and profile, then assign RBAC role",
+      "confidence": 0.921,
+      "source_path": "internal/usecase/user_manage_service.go",
+      "evidence_quote": "if err := s.rbac.AssignRole(ctx, user.ID, role); err != nil {\n\t\t_ = s.users.Delete(ctx, user.ID)\n\t\treturn nil, err\n\t}",
+      "explanation": "Administrative creation assigns a role and deletes the new user if role assignment fails."
+    },
+    {
+      "category": "business_rule",
+      "name": "active_status_mapping",
+      "value": "ACTIVE and NEW_USER statuses set is_active true",
+      "confidence": 0.94,
+      "source_path": "internal/domain/user.go",
+      "evidence_quote": "u.Status = status\n\tu.IsActive = status == UserStatusActive || status == UserStatusNew",
+      "explanation": "The domain model synchronizes active state with status."
+    },
+    {
+      "category": "business_rule",
+      "name": "admin_password_minimum",
+      "value": "Administrative passwords require at least 6 characters",
+      "confidence": 0.92,
+      "source_path": "internal/usecase/user_manage_service.go",
+      "evidence_quote": "if len(pwd) \u003c 6 {\n\t\treturn fmt.Errorf(\"password too short\")\n\t}",
+      "explanation": "The administrative use case enforces a minimum password length."
+    },
+    {
+      "category": "business_rule",
+      "name": "admin_user_pagination",
+      "value": "Default 50; allowed per-page range 10–100",
+      "confidence": 0.93,
+      "source_path": "internal/adapters/http/admin/v1/handler.go",
+      "evidence_quote": "const (\n\tdefaultPerPage = 50\n\tminPerPage     = 10\n\tmaxPerPage     = 100\n)",
+      "explanation": "The production admin handler defines pagination limits."
+    },
+    {
+      "category": "business_rule",
+      "name": "create_user_idempotency",
+      "value": "Repeated create requests for an existing user ID succeed",
+      "confidence": 0.94,
+      "source_path": "internal/adapters/nats/create_user_handler.go",
+      "evidence_quote": "if _, err := h.users.FindByID(ctx, req.ID); err == nil {\n\t\tRespond(msg, map[string]interface{}{\"ok\": true})\n\t\treturn\n\t}",
+      "explanation": "The NATS create-user handler treats an existing ID as a successful replay."
+    },
+    {
+      "category": "business_rule",
+      "name": "identity_email_match",
+      "value": "Attached identity email must match the user email",
+      "confidence": 0.94,
+      "source_path": "internal/usecase/user_service.go",
+      "evidence_quote": "if !strings.EqualFold(user.Email, email) {\n\t\treturn nil, nil, errors.New(\"email does not match user\")\n\t}",
+      "explanation": "Identity attachment requires the supplied email to match the user email case-insensitively."
+    },
+    {
+      "category": "business_rule",
+      "name": "identity_single_owner",
+      "value": "An identity cannot be linked to another user",
+      "confidence": 0.94,
+      "source_path": "internal/usecase/user_service.go",
+      "evidence_quote": "if existing.UserID != userID {\n\t\t\treturn nil, nil, errors.New(\"identity already linked to another user\")\n\t\t}",
+      "explanation": "An external identity cannot be attached to a different user after it is linked."
+    },
+    {
+      "category": "business_rule",
+      "name": "valid_user_status",
+      "value": "Status must be ACTIVE, INACTIVE, BLOCKED, or NEW_USER",
+      "confidence": 0.94,
+      "source_path": "internal/domain/user.go",
+      "evidence_quote": "func (s UserStatus) IsValid() bool {\n\treturn s == UserStatusActive || s == UserStatusInactive || s == UserStatusBlocked || s == UserStatusNew\n}",
+      "explanation": "The domain model explicitly restricts valid user statuses."
+    },
+    {
+      "category": "capability",
+      "name": "business capability",
+      "value": "Authenticated user profile and identity management",
+      "confidence": 0.91,
+      "source_path": "internal/adapters/http/router.go",
+      "evidence_quote": "apiGroup := e.Group(\"/api/v1/users\", r.authMW.Handler)\n\tapiv1.RegisterRoutes(apiGroup, r.apiHandler)",
+      "explanation": "Production router code mounts authenticated user-facing routes at this prefix."
+    },
+    {
+      "category": "capability",
+      "name": "business capability",
+      "value": "Role-restricted user administration",
+      "confidence": 0.92,
+      "source_path": "internal/adapters/http/router.go",
+      "evidence_quote": "adminGroup := e.Group(\"/admin/v1/users\", r.authMW.Handler, r.rbacMW.RequireAnyRole(\"admin\", \"moderator\"))",
+      "explanation": "Production router code exposes administrative user operations to admin or moderator roles."
+    },
+    {
+      "category": "capability",
+      "name": "http_route",
+      "value": "DELETE /me/identities/:provider/:provider_user_id",
+      "confidence": 0.921,
+      "source_path": "internal/adapters/http/api/v1/handler.go",
+      "evidence_quote": "g.POST(\"/me/identities\", h.AttachIdentity)\n\tg.DELETE(\"/me/identities/:provider/:provider_user_id\", h.RemoveIdentity)",
+      "explanation": "Production handler registration exposes identity removal."
+    },
+    {
+      "category": "capability",
+      "name": "http_route",
+      "value": "GET /:id",
+      "confidence": 0.921,
+      "source_path": "internal/adapters/http/api/v1/handler.go",
+      "evidence_quote": "g.GET(\"/me\", h.GetMe)\n\tg.GET(\"/:id\", h.GetByID)\n\tg.PATCH(\"/me\", h.UpdateProfile)",
+      "explanation": "Production handler registration exposes this user lookup operation."
+    },
+    {
+      "category": "capability",
+      "name": "http_route",
+      "value": "GET /health",
+      "confidence": 0.91,
+      "source_path": "internal/adapters/http/internal/router.go",
+      "evidence_quote": "g.GET(\"/health\", func(c echo.Context) error {\n\t\treturn c.JSON(http.StatusOK, map[string]string{\"status\": \"ok\"})\n\t})",
+      "explanation": "Production code implements a health endpoint."
+    },
+    {
+      "category": "capability",
+      "name": "http_route",
+      "value": "GET /",
+      "confidence": 0.921,
+      "source_path": "internal/adapters/http/admin/v1/handler.go",
+      "evidence_quote": "g.GET(\"\", h.ListUsers)\n\tg.GET(\"/:id\", h.GetUser)\n\tg.POST(\"\", h.CreateUser)",
+      "explanation": "Production admin handler registration exposes user listing."
+    },
+    {
+      "category": "capability",
+      "name": "http_route",
+      "value": "GET /me/identities",
+      "confidence": 0.921,
+      "source_path": "internal/adapters/http/api/v1/handler.go",
+      "evidence_quote": "g.GET(\"/me/identities\", h.ListMyIdentities)\n\tg.POST(\"/me/identities\", h.AttachIdentity)\n\tg.DELETE(\"/me/identities/:provider/:provider_user_id\", h.RemoveIdentity)",
+      "explanation": "Production handler registration exposes identity listing."
+    },
+    {
+      "category": "capability",
+      "name": "http_route",
+      "value": "GET /me",
+      "confidence": 0.921,
+      "source_path": "internal/adapters/http/api/v1/handler.go",
+      "evidence_quote": "g.GET(\"/me\", h.GetMe)\n\tg.GET(\"/:id\", h.GetByID)\n\tg.PATCH(\"/me\", h.UpdateProfile)",
+      "explanation": "Production handler registration exposes these user-facing operations beneath the API group."
+    },
+    {
+      "category": "capability",
+      "name": "http_route",
+      "value": "PATCH /:id/role",
+      "confidence": 0.921,
+      "source_path": "internal/adapters/http/admin/v1/handler.go",
+      "evidence_quote": "g.PATCH(\"/:id\", h.UpdateUser)\n\tg.PATCH(\"/:id/status\", h.ChangeStatus)\n\tg.PATCH(\"/:id/role\", h.ChangeRole)",
+      "explanation": "Production admin handler registration exposes role changes."
+    },
+    {
+      "category": "capability",
+      "name": "http_route",
+      "value": "PATCH /:id/status",
+      "confidence": 0.921,
+      "source_path": "internal/adapters/http/admin/v1/handler.go",
+      "evidence_quote": "g.PATCH(\"/:id\", h.UpdateUser)\n\tg.PATCH(\"/:id/status\", h.ChangeStatus)\n\tg.PATCH(\"/:id/role\", h.ChangeRole)",
+      "explanation": "Production admin handler registration exposes status changes."
+    },
+    {
+      "category": "capability",
+      "name": "http_route",
+      "value": "PATCH /:id",
+      "confidence": 0.921,
+      "source_path": "internal/adapters/http/admin/v1/handler.go",
+      "evidence_quote": "g.GET(\"/:id\", h.GetUser)\n\tg.POST(\"\", h.CreateUser)\n\tg.PATCH(\"/:id\", h.UpdateUser)",
+      "explanation": "Production admin handler registration exposes user retrieval and update operations."
+    },
+    {
+      "category": "capability",
+      "name": "http_route",
+      "value": "PATCH /me",
+      "confidence": 0.921,
+      "source_path": "internal/adapters/http/api/v1/handler.go",
+      "evidence_quote": "g.GET(\"/me\", h.GetMe)\n\tg.GET(\"/:id\", h.GetByID)\n\tg.PATCH(\"/me\", h.UpdateProfile)",
+      "explanation": "Production handler registration exposes profile updates."
+    },
+    {
+      "category": "capability",
+      "name": "http_route",
+      "value": "POST /",
+      "confidence": 0.921,
+      "source_path": "internal/adapters/http/admin/v1/handler.go",
+      "evidence_quote": "g.GET(\"\", h.ListUsers)\n\tg.GET(\"/:id\", h.GetUser)\n\tg.POST(\"\", h.CreateUser)",
+      "explanation": "Production admin handler registration exposes user creation."
+    },
+    {
+      "category": "capability",
+      "name": "http_route",
+      "value": "POST /me/avatar",
+      "confidence": 0.921,
+      "source_path": "internal/adapters/http/api/v1/handler.go",
+      "evidence_quote": "g.POST(\"/me/avatar\", h.UploadAvatar)\n\tg.GET(\"/me/identities\", h.ListMyIdentities)",
+      "explanation": "Production handler registration exposes avatar upload."
+    },
+    {
+      "category": "capability",
+      "name": "http_route",
+      "value": "POST /me/identities",
+      "confidence": 0.921,
+      "source_path": "internal/adapters/http/api/v1/handler.go",
+      "evidence_quote": "g.GET(\"/me/identities\", h.ListMyIdentities)\n\tg.POST(\"/me/identities\", h.AttachIdentity)\n\tg.DELETE(\"/me/identities/:provider/:provider_user_id\", h.RemoveIdentity)",
+      "explanation": "Production handler registration exposes identity attachment."
+    },
+    {
+      "category": "command",
+      "name": "docker_down",
+      "value": "make docker-down",
+      "confidence": 0.95,
+      "source_path": "README.md",
+      "evidence_quote": "- `make docker-up` / `make docker-down` — manage Docker Compose\n- `make docker-logs` — tail container logs",
+      "explanation": "The README documents this developer-facing teardown command."
+    },
+    {
+      "category": "command",
+      "name": "docker_logs",
+      "value": "make docker-logs",
+      "confidence": 0.95,
+      "source_path": "README.md",
+      "evidence_quote": "- `make docker-logs` — tail container logs",
+      "explanation": "The README documents this developer-facing logging command."
+    },
+    {
+      "category": "command",
+      "name": "docker_up",
+      "value": "make docker-up",
+      "confidence": 0.95,
+      "source_path": "README.md",
+      "evidence_quote": "Launch the stack: `make docker-up`.\n4. Access the service via `http://localhost:8000`",
+      "explanation": "The README documents this developer-facing stack command."
+    },
+    {
+      "category": "command",
+      "name": "install_dependencies",
+      "value": "make deps",
+      "confidence": 0.95,
+      "source_path": "README.md",
+      "evidence_quote": "- `make deps` — install Go dependencies and linters\n- `make lint` — run `golangci-lint`",
+      "explanation": "The README documents this developer-facing command."
+    },
+    {
+      "category": "command",
+      "name": "lint",
+      "value": "make lint",
+      "confidence": 0.95,
+      "source_path": "README.md",
+      "evidence_quote": "- `make lint` — run `golangci-lint`\n- `make test` — execute unit and integration tests",
+      "explanation": "The README documents this developer-facing command."
+    },
+    {
+      "category": "command",
+      "name": "migrate_down",
+      "value": "make migrate-down",
+      "confidence": 0.92,
+      "source_path": "AGENTS.md",
+      "evidence_quote": "- `make migrate-up` and `migrate-down` call `migrate` with `.env` credentials against `migrations/`.",
+      "explanation": "Repository instructions document the rollback command."
+    },
+    {
+      "category": "command",
+      "name": "migrate_up",
+      "value": "make migrate-up",
+      "confidence": 0.95,
+      "source_path": "README.md",
+      "evidence_quote": "Run migrations using `make migrate-up` (requires `golang-migrate`).",
+      "explanation": "The README documents the migration command."
+    },
+    {
+      "category": "command",
+      "name": "run",
+      "value": "make run",
+      "confidence": 0.95,
+      "source_path": "README.md",
+      "evidence_quote": "- `make run` — run the service locally\n- `make docker-up` / `make docker-down` — manage Docker Compose",
+      "explanation": "The README documents this developer-facing command."
+    },
+    {
+      "category": "command",
+      "name": "test",
+      "value": "make test",
+      "confidence": 0.95,
+      "source_path": "README.md",
+      "evidence_quote": "- `make test` — execute unit and integration tests\n- `make run` — run the service locally",
+      "explanation": "The README documents this developer-facing command."
+    },
+    {
+      "category": "contract",
+      "name": "database_schema",
+      "value": "user_identity",
+      "confidence": 0.921,
+      "source_path": "migrations/0002_user_identity_and_provider.up.sql",
+      "evidence_quote": "CREATE TABLE IF NOT EXISTS user_identity (\n    id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),\n    user_id uuid NOT NULL REFERENCES \"user\"(id) ON DELETE CASCADE,",
+      "explanation": "A checked-in SQL migration establishes the identity schema."
+    },
+    {
+      "category": "contract",
+      "name": "database_schema",
+      "value": "user_profile",
+      "confidence": 0.921,
+      "source_path": "migrations/0001_init.up.sql",
+      "evidence_quote": "CREATE TABLE IF NOT EXISTS user_profile (\n    id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),\n    user_id uuid NOT NULL UNIQUE REFERENCES \"user\"(id) ON DELETE CASCADE,",
+      "explanation": "A checked-in SQL migration establishes the profile schema and foreign key."
+    },
+    {
+      "category": "contract",
+      "name": "database_schema",
+      "value": "user_provider",
+      "confidence": 0.921,
+      "source_path": "migrations/0002_user_identity_and_provider.up.sql",
+      "evidence_quote": "CREATE TABLE IF NOT EXISTS user_provider (\n    id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),\n    provider_type text NOT NULL,",
+      "explanation": "A checked-in SQL migration establishes the provider schema."
+    },
+    {
+      "category": "contract",
+      "name": "database_schema",
+      "value": "user",
+      "confidence": 0.921,
+      "source_path": "migrations/0001_init.up.sql",
+      "evidence_quote": "CREATE TABLE IF NOT EXISTS \"user\" (\n    id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),\n    email text UNIQUE NOT NULL,",
+      "explanation": "A checked-in SQL migration establishes the user table schema."
+    },
+    {
+      "category": "contract",
+      "name": "event_publish",
+      "value": "auth.verifyJWT",
+      "confidence": 0.921,
+      "source_path": "internal/adapters/http/middleware/auth_middleware.go",
+      "evidence_quote": "msg, err := a.nats.RequestWithContext(ctx, a.cfg.NATSAuthVerify, data)",
+      "explanation": "Authentication middleware sends NATS request/reply messages to the configured verification subject."
+    },
+    {
+      "category": "contract",
+      "name": "event_publish",
+      "value": "rbac.checkRole",
+      "confidence": 0.921,
+      "source_path": "internal/adapters/http/middleware/auth_middleware.go",
+      "evidence_quote": "msg, err := a.nats.RequestWithContext(ctx, roleCheckSubject, data)",
+      "explanation": "Authentication middleware sends an RBAC role-check request through NATS."
+    },
+    {
+      "category": "contract",
+      "name": "event_subscribe",
+      "value": "user.create-user",
+      "confidence": 0.92,
+      "source_path": "config/config.go",
+      "evidence_quote": "NATSUserCreate string `env:\"NATS_SUBJECT_USER_CREATE\" envDefault:\"user.create-user\"`",
+      "explanation": "Production configuration declares the default subject used by the registered handler."
+    },
+    {
+      "category": "contract",
+      "name": "event_subscribe",
+      "value": "user.create-user",
+      "confidence": 0.93,
+      "source_path": "internal/app/app.go",
+      "evidence_quote": "_ = rpc.Subscribe(cfg.NATSUserCreate, \"ms-go-user\", createHandler.Handle)",
+      "explanation": "The production composition root registers a queue subscription for user creation requests."
+    },
+    {
+      "category": "contract",
+      "name": "http_consume",
+      "value": "GET /principal-permission/list",
+      "confidence": 0.921,
+      "source_path": "internal/adapters/rbac/client.go",
+      "evidence_quote": "c.get(ctx, \"/principal-permission/list\", url.Values{\"user_id\": {userID}}, \u0026resp)",
+      "explanation": "The production RBAC adapter consumes the permissions-list endpoint."
+    },
+    {
+      "category": "contract",
+      "name": "http_consume",
+      "value": "GET /principal-role/get-by-role",
+      "confidence": 0.921,
+      "source_path": "internal/adapters/rbac/client.go",
+      "evidence_quote": "c.get(ctx, \"/principal-role/get-by-role\", url.Values{\"user_id\": {userID}, \"role\": {role}}, \u0026resp)",
+      "explanation": "The production RBAC adapter consumes the role-check endpoint."
+    },
+    {
+      "category": "contract",
+      "name": "http_consume",
+      "value": "PATCH /principal-role/update",
+      "confidence": 0.921,
+      "source_path": "internal/adapters/rbac/client.go",
+      "evidence_quote": "return c.sendJSON(ctx, http.MethodPatch, \"/principal-role/update\", payload)",
+      "explanation": "The production RBAC adapter consumes the role-assignment endpoint."
+    },
+    {
+      "category": "contract",
+      "name": "http_consume",
+      "value": "POST /admin/v1/images/{id}/variants/generate",
+      "confidence": 0.91,
+      "source_path": "internal/adapters/imageprocessor/client.go",
+      "evidence_quote": "url := c.baseURL + path.Join(\"/admin/v1/images\", originalID, \"variants/generate\")\n\treq, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(payload))",
+      "explanation": "The production image-processor adapter consumes this HTTP operation."
+    },
+    {
+      "category": "contract",
+      "name": "http_consume",
+      "value": "POST /files/upload",
+      "confidence": 0.91,
+      "source_path": "internal/adapters/filestorage/client.go",
+      "evidence_quote": "httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf(\"%s/files/upload\", c.baseURL), body)",
+      "explanation": "The production file-storage adapter consumes this HTTP operation."
+    },
+    {
+      "category": "contract",
+      "name": "http_consume",
+      "value": "POST /files/{id}/signed-url",
+      "confidence": 0.91,
+      "source_path": "internal/adapters/filestorage/client.go",
+      "evidence_quote": "http.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf(\"%s/files/%s/signed-url\", c.baseURL, id), bytes.NewReader(payload))",
+      "explanation": "The production file-storage adapter consumes this HTTP operation."
+    },
+    {
+      "category": "contract",
+      "name": "http_definition",
+      "value": "POST /auth/code-verification",
+      "confidence": 0.85,
+      "source_path": "docs/openapi.yaml",
+      "evidence_quote": "/auth/code-verification:\n    post:\n      summary: Verify signup code",
+      "explanation": "The checked-in OpenAPI document defines this operation, although no matching production route was found."
+    },
+    {
+      "category": "contract",
+      "name": "http_definition",
+      "value": "POST /auth/signin",
+      "confidence": 0.85,
+      "source_path": "docs/openapi.yaml",
+      "evidence_quote": "/auth/signin:\n    post:\n      summary: Sign in",
+      "explanation": "The checked-in OpenAPI document defines this operation, although no matching production route was found."
+    },
+    {
+      "category": "contract",
+      "name": "http_definition",
+      "value": "POST /auth/signup",
+      "confidence": 0.85,
+      "source_path": "docs/openapi.yaml",
+      "evidence_quote": "paths:\n  /auth/signup:\n    post:\n      summary: Start signup (2-step)",
+      "explanation": "The checked-in OpenAPI document defines this operation, although no matching production route was found."
+    },
+    {
+      "category": "entity",
+      "name": "identity_provider",
+      "value": "google, github",
+      "confidence": 0.94,
+      "source_path": "internal/domain/user_identity.go",
+      "evidence_quote": "const (\n\tProviderGoogle IdentityProvider = \"google\"\n\tProviderGitHub IdentityProvider = \"github\"\n)",
+      "explanation": "Production domain code defines the supported external identity providers."
+    },
+    {
+      "category": "entity",
+      "name": "user_status",
+      "value": "NEW_USER, ACTIVE, INACTIVE, BLOCKED",
+      "confidence": 0.94,
+      "source_path": "internal/domain/user.go",
+      "evidence_quote": "type UserStatus string\n\nconst (\n\tUserStatusNew      UserStatus = \"NEW_USER\"\n\tUserStatusActive   UserStatus = \"ACTIVE\"\n\tUserStatusInactive UserStatus = \"INACTIVE\"\n\tUserStatusBlocked  UserStatus = \"BLOCKED\"\n)",
+      "explanation": "Production domain code defines the supported user status values."
+    },
+    {
+      "category": "infrastructure",
+      "name": "NATS",
+      "value": "Request/reply messaging transport",
+      "confidence": 0.94,
+      "source_path": "internal/app/app.go",
+      "evidence_quote": "if conn, err := nats.Connect(cfg.NATSURL); err == nil {\n\t\t\tnatsConn = conn",
+      "explanation": "Production composition code connects to NATS when configured."
+    },
+    {
+      "category": "infrastructure",
+      "name": "PostgreSQL",
+      "value": "Primary persistence database",
+      "confidence": 0.94,
+      "source_path": "internal/app/app.go",
+      "evidence_quote": "db, err := gorm.Open(postgres.Open(buildDSN(cfg)), \u0026gorm.Config{",
+      "explanation": "Production composition code connects to PostgreSQL through GORM."
+    },
+    {
+      "category": "infrastructure",
+      "name": "container_builder",
+      "value": "golang:1.24-alpine",
+      "confidence": 0.93,
+      "source_path": "build/docker/Dockerfile",
+      "evidence_quote": "FROM golang:1.24-alpine AS builder\nWORKDIR /app",
+      "explanation": "The production image uses a Go Alpine builder stage."
+    },
+    {
+      "category": "infrastructure",
+      "name": "container_runtime",
+      "value": "gcr.io/distroless/base-debian12",
+      "confidence": 0.93,
+      "source_path": "build/docker/Dockerfile",
+      "evidence_quote": "FROM gcr.io/distroless/base-debian12\nWORKDIR /app",
+      "explanation": "The production runtime image uses a distroless Debian base."
+    },
+    {
+      "category": "infrastructure",
+      "name": "ms-net",
+      "value": "External Docker network",
+      "confidence": 0.93,
+      "source_path": "docker-compose.yml",
+      "evidence_quote": "networks:\n  ms-net:\n    external: true",
+      "explanation": "Docker Compose requires an externally managed network."
+    },
+    {
+      "category": "infrastructure",
+      "name": "nginx_proxy",
+      "value": "user-service:8080",
+      "confidence": 0.94,
+      "source_path": "build/docker/nginx/nginx.conf.tmpl",
+      "evidence_quote": "proxy_pass http://user-service:8080;\n        proxy_set_header Host $host;",
+      "explanation": "The checked-in runtime proxy configuration forwards traffic to the service container."
+    },
+    {
+      "category": "infrastructure",
+      "name": "nginx",
+      "value": "nginx:1.25-alpine",
+      "confidence": 0.95,
+      "source_path": "docker-compose.yml",
+      "evidence_quote": "nginx:\n    container_name: ms-user-nginx\n    image: nginx:1.25-alpine",
+      "explanation": "Docker Compose declares the Nginx reverse proxy."
+    },
+    {
+      "category": "infrastructure",
+      "name": "postgres",
+      "value": "postgres:16-alpine",
+      "confidence": 0.95,
+      "source_path": "docker-compose.yml",
+      "evidence_quote": "image: postgres:16-alpine\n    ports:\n      - \"127.0.0.1:${POSTGRES_HOST_PORT:-5432}:5432\"",
+      "explanation": "Docker Compose declares the local PostgreSQL image and loopback-bound port."
+    },
+    {
+      "category": "ownership",
+      "name": "database_table",
+      "value": "user_identity",
+      "confidence": 0.95,
+      "source_path": "migrations/0002_user_identity_and_provider.up.sql",
+      "evidence_quote": "CREATE TABLE IF NOT EXISTS user_identity (\n    id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),",
+      "explanation": "A checked-in SQL migration creates this table."
+    },
+    {
+      "category": "ownership",
+      "name": "database_table",
+      "value": "user_profile",
+      "confidence": 0.95,
+      "source_path": "migrations/0001_init.up.sql",
+      "evidence_quote": "CREATE TABLE IF NOT EXISTS user_profile (\n    id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),",
+      "explanation": "A checked-in SQL migration creates this table."
+    },
+    {
+      "category": "ownership",
+      "name": "database_table",
+      "value": "user_provider",
+      "confidence": 0.95,
+      "source_path": "migrations/0002_user_identity_and_provider.up.sql",
+      "evidence_quote": "CREATE TABLE IF NOT EXISTS user_provider (\n    id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),",
+      "explanation": "A checked-in SQL migration creates this table."
+    },
+    {
+      "category": "ownership",
+      "name": "database_table",
+      "value": "user",
+      "confidence": 0.95,
+      "source_path": "migrations/0001_init.up.sql",
+      "evidence_quote": "CREATE TABLE IF NOT EXISTS \"user\" (\n    id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),",
+      "explanation": "A checked-in SQL migration creates this table."
+    },
+    {
+      "category": "ownership",
+      "name": "domain_entity",
+      "value": "UserIdentity",
+      "confidence": 0.93,
+      "source_path": "internal/domain/user_identity.go",
+      "evidence_quote": "type UserIdentity struct {\n\tID             string           `gorm:\"type:uuid;default:uuid_generate_v4();primaryKey\" json:\"id\"`",
+      "explanation": "Production domain code declares the UserIdentity entity."
+    },
+    {
+      "category": "ownership",
+      "name": "domain_entity",
+      "value": "UserProfile",
+      "confidence": 0.93,
+      "source_path": "internal/domain/user_profile.go",
+      "evidence_quote": "type UserProfile struct {\n\tID           string    `gorm:\"type:uuid;default:uuid_generate_v4();primaryKey\" json:\"id\"`",
+      "explanation": "Production domain code declares the UserProfile entity."
+    },
+    {
+      "category": "ownership",
+      "name": "domain_entity",
+      "value": "UserProvider",
+      "confidence": 0.93,
+      "source_path": "internal/domain/user_provider.go",
+      "evidence_quote": "type UserProvider struct {\n\tID             string    `gorm:\"type:uuid;default:uuid_generate_v4();primaryKey\" json:\"id\"`",
+      "explanation": "Production domain code declares the UserProvider entity."
+    },
+    {
+      "category": "ownership",
+      "name": "domain_entity",
+      "value": "User",
+      "confidence": 0.93,
+      "source_path": "internal/domain/user.go",
+      "evidence_quote": "type User struct {\n\tID           string     `gorm:\"type:uuid;default:uuid_generate_v4();primaryKey\" json:\"id\"`",
+      "explanation": "Production domain code declares the User entity."
+    },
+    {
+      "category": "purpose",
+      "name": "summary",
+      "value": "Go user-management microservice with HTTP and retained NATS RPC",
+      "confidence": 0.921,
+      "source_path": "README.md",
+      "evidence_quote": "Production-ready Go microservice implementing user management with Clean Architecture, Echo, GORM, retained NATS RPC, and OAuth integrations.",
+      "explanation": "The README directly states the service purpose and principal technologies."
+    },
+    {
+      "category": "relation",
+      "name": "depends_on",
+      "value": "ms-go-auth",
+      "confidence": 0.88,
+      "source_path": "internal/domain/user.go",
+      "evidence_quote": "func (u *User) SetPasswordHash(hash string) {\n\t// password hash is managed by ms-go-auth\n}",
+      "explanation": "Production domain code explicitly identifies the connected project responsible for password hashes."
+    }
+  ],
+  "rejected_facts": [
+    {
+      "category": "business_process",
+      "name": "avatar_upload",
+      "source_path": "internal/adapters/http/api/v1/handler.go",
+      "reason": "evidence_quote_not_verified_against_current_source"
+    }
+  ],
+  "open_questions": [
+    {
+      "question": "Are the OpenAPI authentication paths still intended to be served by this repository?",
+      "reason": "docs/openapi.yaml defines signup, verification, and signin operations, but the production router only mounts internal health, user API, and admin user groups.",
+      "source_paths": [
+        "docs/openapi.yaml",
+        "internal/adapters/http/router.go"
+      ]
+    },
+    {
+      "question": "Should the OpenAPI user paths be updated from `/users/...` to the runtime prefix `/api/v1/users/...`, or is an external gateway expected to rewrite them?",
+      "reason": "The OpenAPI document and production router use different path prefixes, and no authoritative gateway mapping is present in this repository.",
+      "source_paths": [
+        "docs/openapi.yaml",
+        "internal/adapters/http/router.go"
+      ]
+    },
+    {
+      "question": "Is the Tarantool registration adapter intentionally dormant?",
+      "reason": "A production Tarantool HTTP client exists, but internal/app/app.go does not construct or inject it into the running application.",
+      "source_paths": [
+        "internal/adapters/tarantool/client.go",
+        "internal/app/app.go"
+      ]
+    },
+    {
+      "question": "Should Taskfile `run` target `./cmd/user-service` instead of `./cmd/ms-go-user`?",
+      "reason": "Taskfile.yml names a command directory that is absent, while the checked-in entry point and Makefile use cmd/user-service.",
+      "source_paths": [
+        "Makefile",
+        "Taskfile.yml",
+        "cmd/user-service/main.go"
+      ]
+    },
+    {
+      "question": "Which system is authoritative for administrative password updates?",
+      "reason": "The administrative use case hashes passwords, but User.SetPasswordHash is a no-op stating that ms-go-auth manages password hashes, and migration 0006 removes password_hash from the user table.",
+      "source_paths": [
+        "internal/domain/user.go",
+        "internal/usecase/user_manage_service.go",
+        "migrations/0006_auth_split.up.sql"
+      ]
+    },
+    {
+      "question": "Should role comparison normalize case consistently?",
+      "reason": "AuthMiddleware stores the role with strings.ToUpper, while RBAC middleware compares it directly with lowercase required roles `admin` and `moderator`.",
+      "source_paths": [
+        "internal/adapters/http/middleware/auth_middleware.go",
+        "internal/adapters/http/middleware/rbac_middleware.go",
+        "internal/adapters/http/router.go"
+      ]
+    },
+    {
+      "question": "Should the health documentation use `/internal/health` rather than `/health`?",
+      "reason": "The production router mounts the health handler beneath `/internal`, while README.md describes `GET /health`.",
+      "source_paths": [
+        "README.md",
+        "internal/adapters/http/internal/router.go",
+        "internal/adapters/http/router.go"
+      ]
+    },
+    {
+      "question": "Is migration-on-start implemented or obsolete?",
+      "reason": "Production configuration defines DB_MIGRATE_ON_START, but the application composition code opens the database without consulting that field or executing migrations.",
+      "source_paths": [
+        "config/config.go",
+        "internal/app/app.go"
+      ]
+    },
+    {
+      "question": "Should the configuration example include the production keys for NATS subject overrides, file storage, image processing, and avatar settings?",
+      "reason": "config/config.go reads these keys, but they are absent from the checked-in configuration example.",
+      "source_paths": [
+        ".env.example",
+        "config/config.go"
+      ]
+    },
+    {
+      "question": "What CI system and required checks should contributors use?",
+      "reason": "No checked-in CI workflow or pipeline configuration was found in the repository inventory.",
+      "source_paths": []
+    },
+    {
+      "question": "Are UserIdentity and UserProvider both active representations of external identity linkage?",
+      "reason": "Both tables and repositories exist, but application wiring discards the UserProvider repository while user-facing operations use UserIdentity.",
+      "source_paths": [
+        "internal/app/app.go",
+        "migrations/0002_user_identity_and_provider.up.sql"
+      ]
+    },
+    {
+      "question": "Should the initial migration be consolidated or documented to clarify the current nullable email and removed password_hash schema?",
+      "reason": "The initial migration creates non-null email and password_hash, while migration 0006 later removes those constraints and the password column.",
+      "source_paths": [
+        "migrations/0001_init.up.sql",
+        "migrations/0006_auth_split.up.sql"
+      ]
+    }
+  ]
+}

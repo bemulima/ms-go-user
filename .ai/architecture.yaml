@@ -1,0 +1,140 @@
+schema_version: 1
+stack:
+    - name: framework
+      value: echo
+      confidence: 0.98
+      source_path: go.mod
+      explanation: go.mod declares dependency github.com/labstack/echo.
+    - name: framework
+      value: nats
+      confidence: 0.98
+      source_path: go.mod
+      explanation: go.mod declares dependency github.com/nats-io/nats.go.
+    - name: framework
+      value: pgx
+      confidence: 0.98
+      source_path: go.mod
+      explanation: go.mod declares dependency github.com/jackc/pgx.
+    - name: language
+      value: go
+      confidence: 1
+      source_path: go.mod
+      explanation: go.mod is the canonical Go module manifest.
+    - name: orchestration
+      value: docker_compose
+      confidence: 0.98
+      source_path: docker-compose.yml
+      explanation: A Docker Compose manifest defines local infrastructure or runtime services.
+ownership:
+    - name: database_table
+      value: user_identity
+      confidence: 0.96
+      source_path: migrations/0002_user_identity_and_provider.up.sql
+      explanation: A checked-in SQL schema file creates this table, indicating schema ownership.
+    - name: database_table
+      value: user_profile
+      confidence: 0.96
+      source_path: migrations/0001_init.up.sql
+      explanation: A checked-in SQL schema file creates this table, indicating schema ownership.
+    - name: database_table
+      value: user_provider
+      confidence: 0.96
+      source_path: migrations/0002_user_identity_and_provider.up.sql
+      explanation: A checked-in SQL schema file creates this table, indicating schema ownership.
+    - name: database_table
+      value: user
+      confidence: 0.96
+      source_path: migrations/0001_init.up.sql
+      explanation: A checked-in SQL schema file creates this table, indicating schema ownership.
+    - name: domain_entity
+      value: UserIdentity
+      confidence: 0.93
+      source_path: internal/domain/user_identity.go
+      explanation: Semantic proposal with a verified repository quote. Production domain code declares the UserIdentity entity.
+    - name: domain_entity
+      value: UserProfile
+      confidence: 0.93
+      source_path: internal/domain/user_profile.go
+      explanation: Semantic proposal with a verified repository quote. Production domain code declares the UserProfile entity.
+    - name: domain_entity
+      value: UserProvider
+      confidence: 0.93
+      source_path: internal/domain/user_provider.go
+      explanation: Semantic proposal with a verified repository quote. Production domain code declares the UserProvider entity.
+    - name: domain_entity
+      value: User
+      confidence: 0.93
+      source_path: internal/domain/user.go
+      explanation: Semantic proposal with a verified repository quote. Production domain code declares the User entity.
+relations:
+    - name: depends_on
+      value: ms-go-auth
+      confidence: 0.88
+      source_path: internal/domain/user.go
+      explanation: Semantic proposal with a verified repository quote. Production domain code explicitly identifies the connected project responsible for password hashes.
+    - name: depends_on
+      value: postgres
+      confidence: 0.9
+      source_path: docker-compose.yml
+      explanation: Docker Compose declares this service dependency.
+    - name: depends_on
+      value: user-service
+      confidence: 0.9
+      source_path: docker-compose.yml
+      explanation: Docker Compose declares this service dependency.
+infrastructure:
+    - name: NATS
+      value: Request/reply messaging transport
+      confidence: 0.94
+      source_path: internal/app/app.go
+      explanation: Semantic proposal with a verified repository quote. Production composition code connects to NATS when configured.
+    - name: PostgreSQL
+      value: Primary persistence database
+      confidence: 0.94
+      source_path: internal/app/app.go
+      explanation: Semantic proposal with a verified repository quote. Production composition code connects to PostgreSQL through GORM.
+    - name: compose_service
+      value: nginx=nginx:1.25-alpine
+      confidence: 0.96
+      source_path: docker-compose.yml
+      explanation: Docker Compose declares this service.
+    - name: compose_service
+      value: postgres=postgres:16-alpine
+      confidence: 0.96
+      source_path: docker-compose.yml
+      explanation: Docker Compose declares this service.
+    - name: compose_service
+      value: user-service
+      confidence: 0.96
+      source_path: docker-compose.yml
+      explanation: Docker Compose declares this service.
+    - name: container_builder
+      value: golang:1.24-alpine
+      confidence: 0.93
+      source_path: build/docker/Dockerfile
+      explanation: Semantic proposal with a verified repository quote. The production image uses a Go Alpine builder stage.
+    - name: container_runtime
+      value: gcr.io/distroless/base-debian12
+      confidence: 0.93
+      source_path: build/docker/Dockerfile
+      explanation: Semantic proposal with a verified repository quote. The production runtime image uses a distroless Debian base.
+    - name: ms-net
+      value: External Docker network
+      confidence: 0.93
+      source_path: docker-compose.yml
+      explanation: Semantic proposal with a verified repository quote. Docker Compose requires an externally managed network.
+    - name: nginx_proxy
+      value: user-service:8080
+      confidence: 0.94
+      source_path: build/docker/nginx/nginx.conf.tmpl
+      explanation: Semantic proposal with a verified repository quote. The checked-in runtime proxy configuration forwards traffic to the service container.
+    - name: nginx
+      value: nginx:1.25-alpine
+      confidence: 0.95
+      source_path: docker-compose.yml
+      explanation: Semantic proposal with a verified repository quote. Docker Compose declares the Nginx reverse proxy.
+    - name: postgres
+      value: postgres:16-alpine
+      confidence: 0.95
+      source_path: docker-compose.yml
+      explanation: Semantic proposal with a verified repository quote. Docker Compose declares the local PostgreSQL image and loopback-bound port.
