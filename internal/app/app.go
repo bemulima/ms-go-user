@@ -15,6 +15,7 @@ import (
 	"gorm.io/gorm/schema"
 
 	"github.com/example/user-service/config"
+	"github.com/example/user-service/internal/adapters/avatarstorage"
 	"github.com/example/user-service/internal/adapters/filestorage"
 	httpadapter "github.com/example/user-service/internal/adapters/http"
 	adminv1 "github.com/example/user-service/internal/adapters/http/admin/v1"
@@ -22,6 +23,7 @@ import (
 	mw "github.com/example/user-service/internal/adapters/http/middleware"
 	"github.com/example/user-service/internal/adapters/imageprocessor"
 	natsadapter "github.com/example/user-service/internal/adapters/nats"
+	"github.com/example/user-service/internal/adapters/oauthavatar"
 	repo "github.com/example/user-service/internal/adapters/postgres"
 	rbacclient "github.com/example/user-service/internal/adapters/rbac"
 	"github.com/example/user-service/internal/usecase"
@@ -87,7 +89,12 @@ func New(ctx context.Context) (*App, error) {
 
 	if natsConn != nil {
 		rpc := natsadapter.Server{Conn: natsConn}
-		createHandler := natsadapter.NewCreateUserHandler(userRepo, profileRepo)
+		avatarClient := oauthavatar.NewHTTPClient(5*time.Second, oauthavatar.DefaultMaxSize)
+		avatarStorage := avatarstorage.NewClient(filestorageClient)
+		oauthProfileImporter := service.NewOAuthProfileImporter(
+			profileRepo, avatarStorage, avatarClient, cfg.AvatarFileKind,
+		)
+		createHandler := natsadapter.NewCreateUserHandler(userRepo, profileRepo, oauthProfileImporter)
 		_ = rpc.Subscribe(cfg.NATSUserCreate, "ms-go-user", createHandler.Handle)
 	}
 

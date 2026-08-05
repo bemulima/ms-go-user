@@ -9,10 +9,38 @@ type UserProfile struct {
 	ID           string    `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
 	UserID       string    `gorm:"type:uuid;not null;uniqueIndex" json:"user_id"`
 	DisplayName  *string   `gorm:"column:display_name" json:"display_name"`
+	FirstName    *string   `gorm:"column:first_name" json:"first_name"`
+	LastName     *string   `gorm:"column:last_name" json:"last_name"`
+	BirthYear    *int      `gorm:"column:birth_year" json:"birth_year"`
+	Gender       *string   `gorm:"column:gender" json:"gender"`
 	AvatarFileID *string   `gorm:"column:avatar_file_id" json:"avatar_file_id"`
 	AvatarURL    *string   `gorm:"-" json:"avatar_url,omitempty"`
 	CreatedAt    time.Time `gorm:"column:created_at;autoCreateTime" json:"created_at"`
 	UpdatedAt    time.Time `gorm:"column:updated_at;autoUpdateTime" json:"updated_at"`
+}
+
+func (p *UserProfile) FillOAuthData(firstName, lastName string, birthYear *int, gender string, currentYear int) {
+	if p.FirstName == nil {
+		p.FirstName = normalizedProfileText(firstName, 128)
+	}
+	if p.LastName == nil {
+		p.LastName = normalizedProfileText(lastName, 128)
+	}
+	if p.BirthYear == nil && birthYear != nil && *birthYear >= 1900 && *birthYear <= currentYear {
+		year := *birthYear
+		p.BirthYear = &year
+	}
+	if p.Gender == nil {
+		p.Gender = normalizedProfileText(strings.ToLower(gender), 64)
+	}
+}
+
+func normalizedProfileText(value string, maxLength int) *string {
+	value = strings.TrimSpace(value)
+	if value == "" || len([]rune(value)) > maxLength {
+		return nil
+	}
+	return &value
 }
 
 func (UserProfile) TableName() string {

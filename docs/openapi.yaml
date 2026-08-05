@@ -117,6 +117,10 @@ components:
         id: {type: string, format: uuid}
         user_id: {type: string, format: uuid}
         display_name: {type: string, nullable: true}
+        first_name: {type: string, nullable: true}
+        last_name: {type: string, nullable: true}
+        birth_year: {type: integer, minimum: 1900, nullable: true}
+        gender: {type: string, maxLength: 64, nullable: true}
         avatar_file_id: {type: string, format: uuid, nullable: true}
         avatar_url: {type: string, nullable: true}
         created_at: {type: string, format: date-time}
@@ -133,6 +137,10 @@ components:
         status: {type: string}
         is_active: {type: boolean}
         display_name: {type: string, nullable: true}
+        first_name: {type: string, nullable: true}
+        last_name: {type: string, nullable: true}
+        birth_year: {type: integer, minimum: 1900, nullable: true}
+        gender: {type: string, maxLength: 64, nullable: true}
         avatar_file_id: {type: string, format: uuid, nullable: true}
         avatar_url: {type: string, nullable: true}
         created_at: {type: string, format: date-time}

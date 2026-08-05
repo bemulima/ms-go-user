@@ -13,11 +13,14 @@ Production-ready Go microservice implementing user management with Clean Archite
 - Structured logging, request ID propagation, CORS, health check, and graceful shutdown
 - Docker Compose stack with Postgres and Nginx; shared NATS is provided by the infra messaging stack
 - TDD-first unit and integration tests using `go test`
+- Import of optional OAuth profile fields and provider avatars into `user_profile` and ms-go-filestorage
 
 ## Messaging Status
 
 - Supported target transports for this service are HTTP and retained NATS RPC.
 - Retained Core NATS RPC for this service is limited to `user.create-user`, which is a mutating request/reply subject and must stay idempotent under retries and queue-group-safe under multi-instance deployment.
+- OAuth requests may include an optional `oauth_profile` object with `provider`, `first_name`, `last_name`, `birth_year`, `gender`, and `avatar_url`. Only missing profile fields and a missing avatar are filled, so manually set and previously imported values are not overwritten.
+- Provider avatars are downloaded only over HTTPS from provider-specific allowlisted hosts, limited to 5 MB, and accepted only as JPEG, PNG, or WebP before storage in ms-go-filestorage. Import errors are non-blocking and returned as an RPC warning.
 - RabbitMQ has been physically removed from this service. The service no longer supports RabbitMQ as a transport choice.
 
 ## Getting Started
