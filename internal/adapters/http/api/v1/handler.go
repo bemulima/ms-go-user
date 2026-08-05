@@ -39,6 +39,10 @@ type userResponse struct {
 	Status       *domain.UserStatus `json:"status,omitempty"`
 	IsActive     *bool              `json:"is_active,omitempty"`
 	DisplayName  *string            `json:"display_name,omitempty"`
+	FirstName    *string            `json:"first_name,omitempty"`
+	LastName     *string            `json:"last_name,omitempty"`
+	BirthYear    *int               `json:"birth_year,omitempty"`
+	Gender       *string            `json:"gender,omitempty"`
 	AvatarFileID *string            `json:"avatar_file_id,omitempty"`
 	AvatarURL    *string            `json:"avatar_url,omitempty"`
 	CreatedAt    time.Time          `json:"created_at"`
@@ -49,6 +53,10 @@ type profileResponse struct {
 	ID           string    `json:"id"`
 	UserID       string    `json:"user_id"`
 	DisplayName  *string   `json:"display_name,omitempty"`
+	FirstName    *string   `json:"first_name,omitempty"`
+	LastName     *string   `json:"last_name,omitempty"`
+	BirthYear    *int      `json:"birth_year,omitempty"`
+	Gender       *string   `json:"gender,omitempty"`
 	AvatarFileID *string   `json:"avatar_file_id,omitempty"`
 	AvatarURL    *string   `json:"avatar_url,omitempty"`
 	CreatedAt    time.Time `json:"created_at"`
@@ -243,6 +251,12 @@ func (h *Handler) newUserResponse(user *domain.User, includeStatus bool) *userRe
 		response.DisplayName = profile.DisplayName
 		response.AvatarFileID = profile.AvatarFileID
 		response.AvatarURL = profile.AvatarURL
+		if includeStatus {
+			response.FirstName = profile.FirstName
+			response.LastName = profile.LastName
+			response.BirthYear = profile.BirthYear
+			response.Gender = profile.Gender
+		}
 	}
 
 	return response
@@ -258,6 +272,10 @@ func (h *Handler) newProfileResponse(profile *domain.UserProfile) *profileRespon
 		ID:           profile.ID,
 		UserID:       profile.UserID,
 		DisplayName:  profile.DisplayName,
+		FirstName:    profile.FirstName,
+		LastName:     profile.LastName,
+		BirthYear:    profile.BirthYear,
+		Gender:       profile.Gender,
 		AvatarFileID: profile.AvatarFileID,
 		AvatarURL:    profile.AvatarURL,
 		CreatedAt:    profile.CreatedAt,

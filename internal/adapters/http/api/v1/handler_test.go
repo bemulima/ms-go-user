@@ -1,6 +1,10 @@
 package v1
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/example/user-service/internal/domain"
+)
 
 func TestMaskEmail(t *testing.T) {
 	t.Parallel()
@@ -22,5 +26,25 @@ func TestMaskEmail(t *testing.T) {
 				t.Fatalf("maskEmail(%q) = %q, want %q", tc.email, got, tc.want)
 			}
 		})
+	}
+}
+
+func TestSensitiveOAuthProfileFieldsAreOnlyReturnedToCurrentUser(t *testing.T) {
+	firstName := "Ada"
+	lastName := "Lovelace"
+	birthYear := 1998
+	gender := "female"
+	user := &domain.User{ID: "user-1", Email: "ada@example.com", Profile: &domain.UserProfile{
+		FirstName: &firstName, LastName: &lastName, BirthYear: &birthYear, Gender: &gender,
+	}}
+	handler := &Handler{}
+
+	self := handler.newSelfUserResponse(user)
+	if self.FirstName == nil || self.LastName == nil || self.BirthYear == nil || self.Gender == nil {
+		t.Fatalf("current user response must include OAuth profile fields: %+v", self)
+	}
+	public := handler.newPublicUserResponse(user)
+	if public.FirstName != nil || public.LastName != nil || public.BirthYear != nil || public.Gender != nil {
+		t.Fatalf("public response must not expose sensitive OAuth profile fields: %+v", public)
 	}
 }

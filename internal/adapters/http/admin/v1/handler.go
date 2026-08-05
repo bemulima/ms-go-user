@@ -56,6 +56,10 @@ type userResponse struct {
 	Status       domain.UserStatus `json:"status"`
 	IsActive     bool              `json:"is_active"`
 	DisplayName  *string           `json:"display_name,omitempty"`
+	FirstName    *string           `json:"first_name,omitempty"`
+	LastName     *string           `json:"last_name,omitempty"`
+	BirthYear    *int              `json:"birth_year,omitempty"`
+	Gender       *string           `json:"gender,omitempty"`
 	AvatarFileID *string           `json:"avatar_file_id,omitempty"`
 	AvatarURL    *string           `json:"avatar_url,omitempty"`
 	CreatedAt    time.Time         `json:"created_at"`
@@ -212,6 +216,10 @@ func (h *Handler) newUserResponse(user *domain.User) *userResponse {
 		Status:       user.StatusOrDefault(),
 		IsActive:     user.IsActive,
 		DisplayName:  profileField(profile, func(value *domain.UserProfile) *string { return value.DisplayName }),
+		FirstName:    profileField(profile, func(value *domain.UserProfile) *string { return value.FirstName }),
+		LastName:     profileField(profile, func(value *domain.UserProfile) *string { return value.LastName }),
+		BirthYear:    profileIntField(profile, func(value *domain.UserProfile) *int { return value.BirthYear }),
+		Gender:       profileField(profile, func(value *domain.UserProfile) *string { return value.Gender }),
 		AvatarFileID: profileField(profile, func(value *domain.UserProfile) *string { return value.AvatarFileID }),
 		AvatarURL:    profileField(profile, func(value *domain.UserProfile) *string { return value.AvatarURL }),
 		CreatedAt:    user.CreatedAt,
@@ -228,6 +236,13 @@ func (h *Handler) decorateProfile(profile *domain.UserProfile) *domain.UserProfi
 }
 
 func profileField(profile *domain.UserProfile, selector func(*domain.UserProfile) *string) *string {
+	if profile == nil {
+		return nil
+	}
+	return selector(profile)
+}
+
+func profileIntField(profile *domain.UserProfile, selector func(*domain.UserProfile) *int) *int {
 	if profile == nil {
 		return nil
 	}
