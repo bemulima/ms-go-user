@@ -26,7 +26,7 @@ import (
 	"github.com/example/user-service/internal/adapters/oauthavatar"
 	repo "github.com/example/user-service/internal/adapters/postgres"
 	rbacclient "github.com/example/user-service/internal/adapters/rbac"
-	"github.com/example/user-service/internal/usecase"
+	service "github.com/example/user-service/internal/usecase"
 	pkglog "github.com/example/user-service/pkg/log"
 )
 
@@ -66,11 +66,13 @@ func New(ctx context.Context) (*App, error) {
 	}
 
 	userRepo := repo.NewUserRepository(db)
+	activeUserRepo := repo.NewActiveUserRepository(db)
 	profileRepo := repo.NewUserProfileRepository(db)
 	_ = repo.NewUserProviderRepository(db)
 	identityRepo := repo.NewUserIdentityRepository(db)
 	userService := service.NewUserService(userRepo, profileRepo, identityRepo)
 	manageService := service.NewUserManageService(userRepo, profileRepo, rbacClient)
+	activeUserService := service.NewActiveUserService(activeUserRepo)
 
 	var imageProcClient imageprocessor.Client
 	if cfg.ImageProcessorURL != "" {
@@ -84,7 +86,7 @@ func New(ctx context.Context) (*App, error) {
 	rbacMW := mw.NewRBACMiddleware(rbacClient)
 
 	e := echo.New()
-	router := httpadapter.NewRouter(cfg, apiHandler, adminHandler, authMW, rbacMW)
+	router := httpadapter.NewRouter(cfg, apiHandler, adminHandler, activeUserService, authMW, rbacMW)
 	router.Setup(e)
 
 	if natsConn != nil {

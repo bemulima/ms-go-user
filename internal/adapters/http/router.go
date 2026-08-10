@@ -11,18 +11,21 @@ import (
 	apiv1 "github.com/example/user-service/internal/adapters/http/api/v1"
 	internalhttp "github.com/example/user-service/internal/adapters/http/internal"
 	authmw "github.com/example/user-service/internal/adapters/http/middleware"
+	service "github.com/example/user-service/internal/usecase"
 )
 
 type Router struct {
 	cfg          *config.Config
 	apiHandler   *apiv1.Handler
 	adminHandler *adminv1.Handler
+	activeUsers  service.ActiveUserResolver
 	authMW       *authmw.AuthMiddleware
 	rbacMW       *authmw.RBACMiddleware
 }
 
-func NewRouter(cfg *config.Config, apiHandler *apiv1.Handler, adminHandler *adminv1.Handler, authMW *authmw.AuthMiddleware, rbacMW *authmw.RBACMiddleware) *Router {
-	return &Router{cfg: cfg, apiHandler: apiHandler, adminHandler: adminHandler, authMW: authMW, rbacMW: rbacMW}
+// NewRouter creates the HTTP composition for public, administrative, and internal routes.
+func NewRouter(cfg *config.Config, apiHandler *apiv1.Handler, adminHandler *adminv1.Handler, activeUsers service.ActiveUserResolver, authMW *authmw.AuthMiddleware, rbacMW *authmw.RBACMiddleware) *Router {
+	return &Router{cfg: cfg, apiHandler: apiHandler, adminHandler: adminHandler, activeUsers: activeUsers, authMW: authMW, rbacMW: rbacMW}
 }
 
 func (r *Router) Setup(e *echo.Echo) {
@@ -36,7 +39,7 @@ func (r *Router) Setup(e *echo.Echo) {
 		AllowMethods: []string{http.MethodGet, http.MethodPost, http.MethodPatch, http.MethodDelete, http.MethodOptions},
 	}))
 	internalGroup := e.Group("/internal")
-	internalhttp.Register(internalGroup)
+	internalhttp.Register(internalGroup, internalhttp.NewHandler(r.activeUsers), r.cfg.InternalAPIToken)
 
 	apiGroup := e.Group("/api/v1/users", r.authMW.Handler)
 	apiv1.RegisterRoutes(apiGroup, r.apiHandler)
