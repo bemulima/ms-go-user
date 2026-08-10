@@ -47,8 +47,9 @@ type Config struct {
 	TarantoolURL string `env:"MS_TARANTOOL_URL"`
 	RBACURL      string `env:"MS_RBAC"`
 
-	NATSURL        string `env:"NATS_URL" envDefault:"nats://localhost:4222"`
-	NATSUserCreate string `env:"NATS_SUBJECT_USER_CREATE" envDefault:"user.create-user"`
+	NATSURL          string `env:"NATS_URL" envDefault:"nats://localhost:4222"`
+	NATSUserCreate   string `env:"NATS_SUBJECT_USER_CREATE" envDefault:"user.create-user"`
+	InternalAPIToken string `env:"INTERNAL_API_TOKEN" envDefault:"change-me"`
 
 	CORSAllowOrigins string `env:"CORS_ALLOW_ORIGINS" envDefault:"*"`
 	RateLimitPerMin  int    `env:"RATE_LIMIT_PER_MIN" envDefault:"120"`

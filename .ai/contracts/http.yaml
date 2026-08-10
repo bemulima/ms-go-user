@@ -1,6 +1,11 @@
 schema_version: 1
 contracts:
     - name: http_route
+      value: POST /internal/v1/users/active/resolve
+      confidence: 1
+      source_path: internal/adapters/http/internal/router.go
+      explanation: Exact internal token protected batch lookup resolves up to 1000 active user UUIDs without profile data.
+    - name: http_route
       value: DELETE /me/identities/:provider/:provider_user_id
       confidence: 0.84
       source_path: internal/adapters/http/api/v1/handler.go

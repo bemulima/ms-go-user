@@ -41,6 +41,23 @@ Production-ready Go microservice implementing user management with Clean Archite
 
 ## API
 
+### Internal endpoints
+
+- `POST /internal/v1/users/active/resolve` — resolve up to 1000 unique user UUIDs in one database query.
+
+The endpoint requires an exact `X-Internal-Token` matching `INTERNAL_API_TOKEN`, is intended only for the private service network, and returns no profile or email data:
+
+```json
+{
+  "data": {
+    "active_user_ids": ["11111111-1111-4111-8111-111111111111"],
+    "unavailable_user_ids": ["22222222-2222-4222-8222-222222222222"]
+  }
+}
+```
+
+`ACTIVE` and `NEW_USER` users whose `is_active` flag is true are active. Missing, inactive, and blocked users are reported as unavailable. Response arrays preserve request order.
+
 ### Admin endpoints
 
 - `GET /admin/v1/users?page=1&per=50` — list users (per: 10..100, default 50)

@@ -35,6 +35,11 @@ stack:
       explanation: A Docker Compose manifest defines local infrastructure or runtime services.
 capabilities:
     - name: business capability
+      value: Bounded internal active-user batch resolution
+      confidence: 1
+      source_path: internal/usecase/active_user_service.go
+      explanation: A single repository call partitions up to 1000 unique UUIDs into active and unavailable sets while preserving request order.
+    - name: business capability
       value: Authenticated user profile and identity management
       confidence: 0.94
       source_path: internal/adapters/http/router.go
@@ -187,6 +192,11 @@ dependencies:
       source_path: docker-compose.yml
       explanation: Docker Compose declares this service dependency.
 contracts:
+    - name: http_produce
+      value: POST /internal/v1/users/active/resolve
+      confidence: 1
+      source_path: internal/adapters/http/internal/router.go
+      explanation: Private exact-token endpoint for bounded active-user resolution without profile disclosure.
     - name: database_schema
       value: migrations/0001_init.up.sql
       confidence: 0.96
