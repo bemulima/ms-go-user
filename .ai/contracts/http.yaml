@@ -1,77 +1,16 @@
 schema_version: 1
-contracts:
-    - name: http_route
-      value: POST /internal/v1/users/active/resolve
-      confidence: 1
-      source_path: internal/adapters/http/internal/router.go
-      explanation: Exact internal token protected batch lookup resolves up to 1000 active user UUIDs without profile data.
-    - name: http_route
-      value: DELETE /me/identities/:provider/:provider_user_id
-      confidence: 0.84
-      source_path: internal/adapters/http/api/v1/handler.go
-      explanation: A route registration or controller decorator exposes this HTTP operation.
-    - name: http_route
-      value: GET /:id
-      confidence: 0.84
-      source_path: internal/adapters/http/admin/v1/handler.go
-      explanation: A route registration or controller decorator exposes this HTTP operation.
-    - name: http_route
-      value: GET /:id
-      confidence: 0.84
-      source_path: internal/adapters/http/api/v1/handler.go
-      explanation: A route registration or controller decorator exposes this HTTP operation.
-    - name: http_route
-      value: GET /health
-      confidence: 0.84
-      source_path: internal/adapters/http/internal/router.go
-      explanation: A route registration or controller decorator exposes this HTTP operation.
-    - name: http_route
-      value: GET /
-      confidence: 0.94
-      source_path: internal/adapters/http/admin/v1/handler.go
-      explanation: Semantic proposal with a verified repository quote. The administrative production handler registers user listing.
-    - name: http_route
-      value: GET /me/identities
-      confidence: 0.84
-      source_path: internal/adapters/http/api/v1/handler.go
-      explanation: A route registration or controller decorator exposes this HTTP operation.
-    - name: http_route
-      value: GET /me
-      confidence: 0.84
-      source_path: internal/adapters/http/api/v1/handler.go
-      explanation: A route registration or controller decorator exposes this HTTP operation.
-    - name: http_route
-      value: PATCH /:id/role
-      confidence: 0.84
-      source_path: internal/adapters/http/admin/v1/handler.go
-      explanation: A route registration or controller decorator exposes this HTTP operation.
-    - name: http_route
-      value: PATCH /:id/status
-      confidence: 0.84
-      source_path: internal/adapters/http/admin/v1/handler.go
-      explanation: A route registration or controller decorator exposes this HTTP operation.
-    - name: http_route
-      value: PATCH /:id
-      confidence: 0.84
-      source_path: internal/adapters/http/admin/v1/handler.go
-      explanation: A route registration or controller decorator exposes this HTTP operation.
-    - name: http_route
-      value: PATCH /me
-      confidence: 0.84
-      source_path: internal/adapters/http/api/v1/handler.go
-      explanation: A route registration or controller decorator exposes this HTTP operation.
-    - name: http_route
-      value: POST /
-      confidence: 0.94
-      source_path: internal/adapters/http/admin/v1/handler.go
-      explanation: Semantic proposal with a verified repository quote. The administrative production handler registers user creation.
-    - name: http_route
-      value: POST /me/avatar
-      confidence: 0.84
-      source_path: internal/adapters/http/api/v1/handler.go
-      explanation: A route registration or controller decorator exposes this HTTP operation.
-    - name: http_route
-      value: POST /me/identities
-      confidence: 0.84
-      source_path: internal/adapters/http/api/v1/handler.go
-      explanation: A route registration or controller decorator exposes this HTTP operation.
+documentation: docs/http-contract.md
+api_base: /api/v1/users
+api:
+  - {method: GET, path: /me}
+  - {method: GET, path: '/:id'}
+  - {method: PATCH, path: /me}
+  - {method: POST, path: /me/avatar}
+  - {method: GET, path: /me/identities}
+  - {method: POST, path: /me/identities}
+  - {method: DELETE, path: '/me/identities/:provider/:provider_user_id'}
+admin_base: /admin/v1/users
+admin_methods: [GET collection, GET item, POST collection, PATCH item, PATCH item status, PATCH item role]
+internal:
+  - {method: GET, path: /internal/health}
+  - {method: POST, path: /internal/v1/users/active/resolve, auth: X-Internal-Token, max_body_bytes: 65536, max_ids: 1000}

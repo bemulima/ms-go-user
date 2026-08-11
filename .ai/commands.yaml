@@ -1,56 +1,10 @@
 schema_version: 1
 commands:
-    - name: compose_logs
-      run: make docker-logs
-      source_path: README.md
-      confidence: 0.93
-      requires_approval: true
-      risk: lifecycle
-    - name: install_dependencies
-      run: make deps
-      source_path: README.md
-      confidence: 0.93
-      requires_approval: true
-      risk: lifecycle
-    - name: lint
-      run: make lint
-      source_path: README.md
-      confidence: 0.93
-      requires_approval: false
-      risk: verification
-    - name: migrate-down
-      run: make migrate-down
-      source_path: Makefile
-      confidence: 0.92
-      requires_approval: true
-      risk: state_change
-    - name: migrate-up
-      run: make migrate-up
-      source_path: Makefile
-      confidence: 0.92
-      requires_approval: true
-      risk: state_change
-    - name: run_service
-      run: make run
-      source_path: README.md
-      confidence: 0.93
-      requires_approval: true
-      risk: lifecycle
-    - name: start_compose_stack
-      run: make docker-up
-      source_path: README.md
-      confidence: 0.93
-      requires_approval: true
-      risk: lifecycle
-    - name: stop_compose_stack
-      run: make docker-down
-      source_path: README.md
-      confidence: 0.93
-      requires_approval: true
-      risk: state_change
-    - name: test
-      run: make test
-      source_path: README.md
-      confidence: 0.93
-      requires_approval: false
-      risk: verification
+  - {name: agent-policy, run: ./scripts/check-agent-policy.sh, requires_approval: false, risk: verification}
+  - {name: format-check, run: 'test -z "$(gofmt -l $(git ls-files ''*.go''))"', requires_approval: false, risk: verification}
+  - {name: vet, run: go vet ./..., requires_approval: false, risk: verification}
+  - {name: test, run: go test ./..., requires_approval: false, risk: verification}
+  - {name: run, run: go run ./cmd/user-service, requires_approval: true, risk: lifecycle}
+  - {name: migrate-up, run: task migrate-up, requires_approval: true, risk: database-write}
+  - {name: migrate-down, run: task migrate-down, requires_approval: true, risk: destructive-database-write}
+  - {name: e2e, run: go test ./test/e2e/..., requires_approval: true, risk: external-services}

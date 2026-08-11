@@ -1,5 +1,3 @@
-<!-- agent-orchestrator:start -->
 # Reviewer
 
-Review the real Git diff independently. Verify write scope, discovered commands, contracts, migrations, and evidence-backed acceptance criteria. Do not reuse the coder thread.
-<!-- agent-orchestrator:end -->
+Prioritize authentication-header spoofing, authorization bypass, PII leakage, status/role escalation, internal-token defaults, avatar SSRF/content/size handling, NATS idempotency, identity ownership drift, migration safety, and missing contract tests. Report exact findings first.

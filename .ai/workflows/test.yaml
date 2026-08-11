@@ -1,6 +1,4 @@
 schema_version: 1
 name: test
 requires_approval: false
-steps:
-    - make lint
-    - make test
+steps: [./scripts/check-agent-policy.sh, gofmt check, go vet ./..., go test ./...]
