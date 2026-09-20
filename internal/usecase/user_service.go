@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/example/user-service/internal/adapters/postgres"
 	"github.com/example/user-service/internal/domain"
+	"github.com/example/user-service/internal/port"
 )
 
 type UserService interface {
@@ -21,12 +21,12 @@ type UserService interface {
 }
 
 type userService struct {
-	users      repo.UserRepository
-	profiles   repo.UserProfileRepository
-	identities repo.UserIdentityRepository
+	users      port.UserRepository
+	profiles   port.UserProfileRepository
+	identities port.UserIdentityRepository
 }
 
-func NewUserService(users repo.UserRepository, profiles repo.UserProfileRepository, identities repo.UserIdentityRepository) UserService {
+func NewUserService(users port.UserRepository, profiles port.UserProfileRepository, identities port.UserIdentityRepository) UserService {
 	return &userService{users: users, profiles: profiles, identities: identities}
 }
 

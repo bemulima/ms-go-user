@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/example/user-service/config"
-	authmw "github.com/example/user-service/internal/adapters/http/middleware"
+	authmw "github.com/example/user-service/internal/transport/http/middleware"
 	service "github.com/example/user-service/internal/usecase"
 	pkglog "github.com/example/user-service/pkg/log"
 )

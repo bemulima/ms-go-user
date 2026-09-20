@@ -12,9 +12,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/example/user-service/config"
-	adminv1 "github.com/example/user-service/internal/adapters/http/admin/v1"
-	"github.com/example/user-service/internal/adapters/http/middleware"
 	"github.com/example/user-service/internal/domain"
+	adminv1 "github.com/example/user-service/internal/transport/http/admin/v1/handlers"
+	"github.com/example/user-service/internal/transport/http/middleware"
 	"github.com/example/user-service/pkg/log"
 )
 

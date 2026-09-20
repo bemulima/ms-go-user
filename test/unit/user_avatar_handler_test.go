@@ -12,9 +12,9 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/require"
 
-	"github.com/example/user-service/internal/adapters/filestorage"
-	"github.com/example/user-service/internal/adapters/http/api/v1"
 	"github.com/example/user-service/internal/domain"
+	"github.com/example/user-service/internal/infrastructure/filestorage"
+	v1 "github.com/example/user-service/internal/transport/http/api/v1/handlers"
 )
 
 func TestUploadAvatar_Success(t *testing.T) {

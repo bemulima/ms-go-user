@@ -2,16 +2,12 @@ package service
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
-	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
-
-	"github.com/example/user-service/internal/adapters/postgres"
-	"github.com/example/user-service/internal/adapters/rbac"
 	"github.com/example/user-service/internal/domain"
+	"github.com/example/user-service/internal/port"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type (
@@ -43,12 +39,12 @@ type (
 )
 
 type userManageService struct {
-	users    repo.UserRepository
-	profiles repo.UserProfileRepository
-	rbac     rbac.Client
+	users    port.UserRepository
+	profiles port.UserProfileRepository
+	rbac     port.RBACClient
 }
 
-func NewUserManageService(users repo.UserRepository, profiles repo.UserProfileRepository, rbacClient rbac.Client) UserManageService {
+func NewUserManageService(users port.UserRepository, profiles port.UserProfileRepository, rbacClient port.RBACClient) UserManageService {
 	return &userManageService{users: users, profiles: profiles, rbac: rbacClient}
 }
 
@@ -77,7 +73,7 @@ func (s *userManageService) CreateUser(ctx context.Context, req CreateUserReques
 	}
 	if _, err := s.users.FindByEmail(ctx, email); err == nil {
 		return nil, fmt.Errorf("user already exists")
-	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+	} else if !port.IsNotFound(err) {
 		return nil, err
 	}
 
@@ -129,7 +125,7 @@ func (s *userManageService) UpdateUser(ctx context.Context, userID string, req U
 			return nil, err
 		}
 		existing, err := s.users.FindByEmail(ctx, email)
-		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		if err != nil && !port.IsNotFound(err) {
 			return nil, err
 		}
 		if existing != nil && existing.ID != userID {

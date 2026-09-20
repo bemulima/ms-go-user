@@ -11,8 +11,8 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/require"
 
-	adminv1 "github.com/example/user-service/internal/adapters/http/admin/v1"
 	"github.com/example/user-service/internal/domain"
+	adminv1 "github.com/example/user-service/internal/transport/http/admin/v1/handlers"
 	"github.com/example/user-service/internal/usecase"
 )
 

@@ -16,8 +16,8 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 
-	apiv1 "github.com/example/user-service/internal/adapters/http/api/v1"
 	"github.com/example/user-service/internal/domain"
+	apiv1 "github.com/example/user-service/internal/transport/http/api/v1/handlers"
 	service "github.com/example/user-service/internal/usecase"
 )
 

@@ -7,6 +7,8 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+
+	"github.com/example/user-service/internal/port"
 )
 
 // MaxActiveUserBatch bounds one service-to-service resolution request.
@@ -14,11 +16,6 @@ const MaxActiveUserBatch = 1000
 
 // ErrInvalidActiveUserBatch marks malformed, empty, duplicate, or oversized batches.
 var ErrInvalidActiveUserBatch = errors.New("invalid active user batch")
-
-// ActiveUserRepository is the persistence port for one-query active-user lookup.
-type ActiveUserRepository interface {
-	ListActiveIDs(ctx context.Context, userIDs []string) ([]string, error)
-}
 
 // ActiveUserResolver partitions requested UUIDs into active and unavailable IDs.
 type ActiveUserResolver interface {
@@ -32,11 +29,11 @@ type ActiveUserResolution struct {
 }
 
 type activeUserService struct {
-	users ActiveUserRepository
+	users port.ActiveUserRepository
 }
 
 // NewActiveUserService creates the bounded active-user resolver.
-func NewActiveUserService(users ActiveUserRepository) ActiveUserResolver {
+func NewActiveUserService(users port.ActiveUserRepository) ActiveUserResolver {
 	return &activeUserService{users: users}
 }
 

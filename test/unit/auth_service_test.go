@@ -18,8 +18,8 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/example/user-service/config"
-	"github.com/example/user-service/internal/adapters/tarantool"
 	"github.com/example/user-service/internal/domain"
+	"github.com/example/user-service/internal/infrastructure/tarantool"
 	service "github.com/example/user-service/internal/usecase"
 	pkglog "github.com/example/user-service/pkg/log"
 )

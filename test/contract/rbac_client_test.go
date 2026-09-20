@@ -10,7 +10,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/example/user-service/internal/adapters/rbac"
+	"github.com/example/user-service/internal/infrastructure/rbac"
 )
 
 const (
