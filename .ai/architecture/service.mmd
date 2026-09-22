@@ -1,0 +1,46 @@
+%% GENERATED — READ-ONLY PRESENTATION
+%% Do not edit; source of truth is the architecture manifest.
+flowchart LR
+  svc["ms-go-user / ms-go-user"]
+  svcInfo["purpose: Own user lifecycle, public/private profile data, status, and avatar reference.<br/>confidence: 0.95"]
+  svc --> svcInfo
+  service_responsibilities["responsibilities: Own user lifecycle, public/private profile data, status, and avatar reference."]
+  svc --> service_responsibilities
+  service_capabilities["capabilities: Serve the registered runtime operations listed below."]
+  svc --> service_capabilities
+  inbound_0["inbound http: /api/v1/users, /admin/v1/users, and /internal — Echo user, admin, and internal HTTP contours"]
+  inbound_0 -->|inbound| svc
+  inbound_1["inbound nats: user.create-user — Core NATS request/reply provisioning consumer"]
+  inbound_1 -->|inbound| svc
+  operation_0["operation: delete-users-me-identities-provider-user (http)"]
+  svc --> operation_0
+  operation_1["operation: get-admin-users-id (http)"]
+  svc --> operation_1
+  operation_2["operation: get-admin-users (http)"]
+  svc --> operation_2
+  operation_3["operation: get-internal-health (http)"]
+  svc --> operation_3
+  operation_4["operation: get-users-id (http)"]
+  svc --> operation_4
+  operation_5["operation: get-users-me-identities (http)"]
+  svc --> operation_5
+  operation_6["operation: get-users-me (http)"]
+  svc --> operation_6
+  operation_7["operation: patch-admin-users-id-role (http)"]
+  svc --> operation_7
+  operation_8["operation: patch-admin-users-id-status (http)"]
+  svc --> operation_8
+  operation_9["operation: patch-admin-users-id (http)"]
+  svc --> operation_9
+  operation_10["operation: patch-users-me (http)"]
+  svc --> operation_10
+  operation_11["operation: post-admin-users (http)"]
+  svc --> operation_11
+  operation_12["operation: post-internal-users-active-resolve (http)"]
+  svc --> operation_12
+  operation_13["operation: post-users-me-avatar (http)"]
+  svc --> operation_13
+  operation_14["operation: post-users-me-identities (http)"]
+  svc --> operation_14
+  operation_15["operation: nats-user-create-user (nats_request_reply)"]
+  svc --> operation_15

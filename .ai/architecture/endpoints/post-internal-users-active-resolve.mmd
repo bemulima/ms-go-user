@@ -1,0 +1,32 @@
+%% GENERATED — READ-ONLY PRESENTATION
+%% Do not edit; source of truth is the architecture manifest.
+flowchart TD
+  operation["post-internal-users-active-resolve — http"]
+  identity["identity: http / POST / /internal/v1/users/active/resolve"]
+  operation --> identity
+  access["access: internal service caller / X-Internal-Token middleware / valid internal token / no explicit caller idempotency mechanism is registered by this handler"]
+  operation --> access
+  trigger["trigger: POST /internal/v1/users/active/resolve invokes ResolveActiveUsers"]
+  operation --> trigger
+  input["input: unknown"]
+  operation --> input
+  business_task["business task: bounded active-user batch resolution"]
+  operation --> business_task
+  business_process["business process: handler / ResolveActiveUsers validates the request and delegates application behavior"]
+  operation --> business_process
+  business_rules["business rule: unknown"]
+  operation --> business_rules
+  implementation["implementation: router=internal/transport/http/private/router.go / Register; handler=internal/transport/http/private/handlers/handler.go / ResolveActiveUsers; use_cases=unknown; domain_services=unknown; repositories=unknown"]
+  operation --> implementation
+  data_access["data access: unknown"]
+  operation --> data_access
+  external_interactions["external interactions: unknown"]
+  operation --> external_interactions
+  side_effects["side effects: unknown"]
+  operation --> side_effects
+  output["output: unknown"]
+  operation --> output
+  errors["errors: unknown"]
+  operation --> errors
+  evidence["evidence: internal/transport/http/private/handlers/handler.go / ResolveActiveUsers; confidence: 0.9"]
+  operation --> evidence
