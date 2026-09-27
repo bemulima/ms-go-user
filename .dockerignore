@@ -1,0 +1,49 @@
+# Git and macOS metadata
+.git
+.git/**
+.gitignore
+.DS_Store
+._*
+**/._*
+
+# Local environment files. The Dockerfile intentionally copies .env.example.
+.env
+.env.*
+!.env.example
+
+# Go development caches
+.cache
+.cache/**
+.gocache
+.modcache
+
+# Temporary files, logs, and test output
+tmp
+tmp/**
+.temp
+.temp/**
+logs
+logs/**
+*.log
+coverage
+coverage/**
+coverage.out
+*.prof
+*.test
+
+# Editor metadata
+.idea
+.idea/**
+.vscode
+.vscode/**
+*.swp
+*.swo
+
+# Local build output
+bin
+bin/**
+dist
+dist/**
+user-service
+
+# build/ contains the tracked Dockerfile and nginx template, not generated output.
