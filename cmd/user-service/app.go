@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"time"
 
@@ -52,7 +53,7 @@ func New(ctx context.Context) (*App, error) {
 		return nil, err
 	}
 
-	filestorageClient := filestorage.NewHTTPClient(cfg.FileStorageURL, 5*time.Second)
+	filestorageClient := filestorage.NewHTTPClient(cfg.FileStorageURL, cfg.FileStorageInternalToken, 5*time.Second)
 	rbacHTTP := rbacclient.NewHTTPClient(cfg.RBACURL, 3*time.Second)
 	rbacClient := rbacclient.NewCachingClient(rbacHTTP, time.Minute)
 
@@ -76,7 +77,7 @@ func New(ctx context.Context) (*App, error) {
 
 	var imageProcClient imageprocessor.Client
 	if cfg.ImageProcessorURL != "" {
-		imageProcClient = imageprocessor.NewHTTPClient(cfg.ImageProcessorURL, 10*time.Second)
+		imageProcClient = imageprocessor.NewHTTPClient(cfg.ImageProcessorURL, 10*time.Second, cfg.ImageProcessorInternalToken)
 	}
 
 	apiHandler := apiv1.NewHandler(userService, filestorageClient, imageProcClient, cfg.AvatarPresetGroup, cfg.AvatarFileKind)
@@ -112,7 +113,7 @@ func (a *App) Run(ctx context.Context) error {
 		_ = a.echo.Shutdown(shutdownCtx)
 	}()
 	go func() {
-		errCh <- a.echo.Start(":" + a.cfg.AppPort)
+		errCh <- a.echo.Start(net.JoinHostPort(a.cfg.AppHost, a.cfg.AppPort))
 	}()
 	select {
 	case <-ctx.Done():

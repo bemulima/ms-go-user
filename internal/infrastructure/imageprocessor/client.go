@@ -11,36 +11,46 @@ import (
 )
 
 type Client interface {
-	Generate(ctx context.Context, originalID, ownerID, fileKind, presetGroup string, variants []string) error
+	GenerateWithDelegation(ctx context.Context, originalID, ownerID, fileKind, presetGroup string, variants []string, processingDelegation string) error
 }
 
 type httpClient struct {
-	baseURL string
-	client  *http.Client
+	baseURL       string
+	client        *http.Client
+	internalToken string
 }
 
 type generateRequest struct {
-	PresetGroup string   `json:"preset_group"`
-	Variants    []string `json:"variants,omitempty"`
-	Force       bool     `json:"force_regenerate"`
-	OwnerID     string   `json:"owner_id"`
-	FileKind    string   `json:"file_kind"`
+	PresetGroup          string   `json:"preset_group"`
+	Variants             []string `json:"variants,omitempty"`
+	Force                bool     `json:"force_regenerate"`
+	OwnerID              string   `json:"owner_id"`
+	FileKind             string   `json:"file_kind"`
+	ProcessingDelegation string   `json:"processing_delegation"`
 }
 
-func NewHTTPClient(baseURL string, timeout time.Duration) Client {
-	return &httpClient{baseURL: baseURL, client: &http.Client{Timeout: timeout}}
+func NewHTTPClient(baseURL string, timeout time.Duration, internalToken ...string) Client {
+	var token string
+	if len(internalToken) > 0 {
+		token = internalToken[0]
+	}
+	return &httpClient{baseURL: baseURL, client: &http.Client{Timeout: timeout}, internalToken: token}
 }
 
-func (c *httpClient) Generate(ctx context.Context, originalID, ownerID, fileKind, presetGroup string, variants []string) error {
+func (c *httpClient) GenerateWithDelegation(ctx context.Context, originalID, ownerID, fileKind, presetGroup string, variants []string, processingDelegation string) error {
 	if c.baseURL == "" {
 		return fmt.Errorf("image processor url is not configured")
 	}
+	if originalID == "" || ownerID == "" || processingDelegation == "" {
+		return fmt.Errorf("original file, owner and processing delegation are required")
+	}
 	body := generateRequest{
-		PresetGroup: presetGroup,
-		Variants:    variants,
-		Force:       false,
-		OwnerID:     ownerID,
-		FileKind:    fileKind,
+		PresetGroup:          presetGroup,
+		Variants:             variants,
+		Force:                false,
+		OwnerID:              ownerID,
+		FileKind:             fileKind,
+		ProcessingDelegation: processingDelegation,
 	}
 	payload, _ := json.Marshal(body)
 	url := c.baseURL + path.Join("/admin/v1/images", originalID, "variants/generate")
@@ -49,6 +59,7 @@ func (c *httpClient) Generate(ctx context.Context, originalID, ownerID, fileKind
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Internal-Token", c.internalToken)
 
 	res, err := c.client.Do(req)
 	if err != nil {

@@ -192,7 +192,7 @@ func (h *Handler) UploadAvatar(c echo.Context) error {
 		Data:           data,
 	})
 	if err != nil {
-		return res.ErrorJSON(c, http.StatusBadRequest, "upload_failed", err.Error(), middleware.RequestIDFromCtx(c), nil)
+		return res.ErrorJSON(c, http.StatusBadRequest, "upload_failed", "avatar upload failed", middleware.RequestIDFromCtx(c), nil)
 	}
 
 	profile, err := h.users.SetAvatarFileID(c.Request().Context(), userID, uploadResp.ID)
@@ -201,13 +201,28 @@ func (h *Handler) UploadAvatar(c echo.Context) error {
 	}
 
 	if processingMode == "EAGER" && h.imageProc != nil {
-		if err := h.imageProc.Generate(c.Request().Context(), uploadResp.ID, userID, h.avatarKind, h.avatarPreset, nil); err != nil {
-			return res.ErrorJSON(c, http.StatusInternalServerError, "processing_failed", err.Error(), middleware.RequestIDFromCtx(c), nil)
+		delegationClient, ok := h.storage.(filestorage.ProcessingDelegationClient)
+		if !ok {
+			return res.ErrorJSON(c, http.StatusInternalServerError, "processing_failed", "avatar processing failed", middleware.RequestIDFromCtx(c), nil)
+		}
+		processingDelegation, err := delegationClient.CreateProcessingDelegation(
+			c.Request().Context(), uploadResp.ID, userID, "image_processor", "read_source", 0,
+		)
+		if err != nil {
+			return res.ErrorJSON(c, http.StatusInternalServerError, "processing_failed", "avatar processing failed", middleware.RequestIDFromCtx(c), nil)
+		}
+		if processingDelegation == "" {
+			return res.ErrorJSON(c, http.StatusInternalServerError, "processing_failed", "avatar processing failed", middleware.RequestIDFromCtx(c), nil)
+		}
+		if err := h.imageProc.GenerateWithDelegation(c.Request().Context(), uploadResp.ID, userID, h.avatarKind, h.avatarPreset, nil, processingDelegation); err != nil {
+			return res.ErrorJSON(c, http.StatusInternalServerError, "processing_failed", "avatar processing failed", middleware.RequestIDFromCtx(c), nil)
 		}
 	}
 
 	signedURL, _ := h.storage.SignedURL(c.Request().Context(), uploadResp.ID, 15)
-	downloadURL := h.storage.DownloadURL(uploadResp.ID)
+	// Private FileStorage proxy URLs require a service credential. Return the
+	// short-lived capability issued after this authenticated User flow instead.
+	downloadURL := signedURL
 
 	response := map[string]interface{}{
 		"file_id":         uploadResp.ID,

@@ -11,6 +11,7 @@ import (
 type Config struct {
 	AppName          string `env:"APP_NAME" envDefault:"user-service"`
 	AppEnv           string `env:"APP_ENV" envDefault:"local"`
+	AppHost          string `env:"APP_HOST"`
 	AppPort          string `env:"APP_PORT" envDefault:"8080"`
 	AppPublicURL     string `env:"APP_PUBLIC_URL" envDefault:"http://localhost:8000"`
 	DBHost           string `env:"DB_HOST" envDefault:"localhost"`
@@ -39,10 +40,12 @@ type Config struct {
 	GithubClientSecret string `env:"GITHUB_CLIENT_SECRET"`
 	GithubRedirectURL  string `env:"GITHUB_REDIRECT_URL"`
 
-	FileStorageURL    string `env:"MS_FILESTORAGE_URL" envDefault:"http://ms-filestorage:8000"`
-	ImageProcessorURL string `env:"MS_IMAGE_PROCESSOR_URL"`
-	AvatarPresetGroup string `env:"AVATAR_PRESET_GROUP" envDefault:"avatar"`
-	AvatarFileKind    string `env:"AVATAR_FILE_KIND" envDefault:"USER_MEDIA"`
+	FileStorageURL              string `env:"MS_FILESTORAGE_URL" envDefault:"http://ms-filestorage:8000"`
+	FileStorageInternalToken    string `env:"FILESTORAGE_INTERNAL_TOKEN"`
+	ImageProcessorURL           string `env:"IMAGE_PROCESSOR_SERVICE_BASE_URL"`
+	ImageProcessorInternalToken string `env:"IMAGE_PROCESSOR_INTERNAL_TOKEN"`
+	AvatarPresetGroup           string `env:"AVATAR_PRESET_GROUP" envDefault:"avatar"`
+	AvatarFileKind              string `env:"AVATAR_FILE_KIND" envDefault:"USER_MEDIA"`
 
 	TarantoolURL string `env:"MS_TARANTOOL_URL"`
 	RBACURL      string `env:"MS_RBAC"`
