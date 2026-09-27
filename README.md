@@ -26,8 +26,8 @@ Production-ready Go microservice implementing user management with Clean Archite
 ## Getting Started
 
 1. Copy `.env.example` to `.env` and adjust secrets.
-2. Run migrations using `make migrate-up` (requires `golang-migrate`).
-3. Launch the stack: `make docker-up`.
+2. Run migrations using `task migrate-up`.
+3. Launch the stack: `task up`.
 4. Access the service via `http://localhost:8000` (proxied through Nginx).
 
 ## Make Targets
@@ -35,9 +35,11 @@ Production-ready Go microservice implementing user management with Clean Archite
 - `make deps` — install Go dependencies and linters
 - `make lint` — run `golangci-lint`
 - `make test` — execute unit and integration tests
-- `make run` — run the service locally
-- `make docker-up` / `make docker-down` — manage Docker Compose
-- `make docker-logs` — tail container logs
+- `task run` — run the service locally
+- `task up` / `task down` — manage Docker Compose
+- `task migrate-up` — apply standalone Docker PostgreSQL migrations
+- `task migrate-status` — inspect standalone Docker PostgreSQL migration state
+- `task run:native` / `task migrate:native` — native macOS development commands
 
 ## API
 
@@ -83,7 +85,7 @@ The service is built using TDD with unit tests covering business services and ha
 
 ## Observability
 
-Requests carry an `X-Request-ID` header. Structured logs are emitted via Zerolog. Health endpoint: `GET /health`.
+Requests carry an `X-Request-ID` header. Structured logs are emitted via Zerolog. Health endpoint: `GET /internal/health`.
 
 ## Architecture Overview
 

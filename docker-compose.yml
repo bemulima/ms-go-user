@@ -9,6 +9,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      nats:
+        condition: service_started
     restart: unless-stopped
     networks:
       - default
@@ -32,6 +34,22 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
+  nats:
+    image: nats:2.10-alpine
+    command: ["-js"]
+
+  migrate:
+    profiles: ["migration"]
+    build:
+      context: .
+      dockerfile: build/docker/Dockerfile
+    environment:
+      DB_DSN: "postgres://${DB_USER:-app}:${DB_PASSWORD:-app_password}@postgres:5432/${DB_NAME:-userdb}?sslmode=${DB_SSLMODE:-disable}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    entrypoint: ["/app/user-service-migrate"]
+
   nginx:
     container_name: ms-user-nginx
     image: nginx:1.25-alpine
@@ -41,10 +59,14 @@ services:
       - ./build/docker/nginx/nginx.conf.tmpl:/etc/nginx/templates/default.conf.template:ro
     env_file:
       - .env
+    ports:
+      - "127.0.0.1:${NGINX_HOST_PORT:-8000}:80"
 
 volumes:
   pgdata:
 
 networks:
   ms-net:
-    external: true
+    # A project-managed network keeps this standalone Docker path runnable on
+    # a fresh machine. Integrations can attach another network through an
+    # ignored docker-compose.override.yml.

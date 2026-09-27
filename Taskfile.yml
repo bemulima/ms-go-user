@@ -21,24 +21,14 @@ tasks:
       - docker compose up -d {{.DB_CONTAINER}}
 
   migrate-up:
-    desc: Apply SQL migrations in order using psql inside Postgres container
+    desc: Apply migrations to the standalone Docker PostgreSQL service
     cmds:
-      - |
-        set -euo pipefail
-        for f in $(ls migrations/*up.sql | sort); do
-          echo "==> running $f"
-          cat "$f" | docker compose exec -T {{.DB_CONTAINER}} psql -U {{.DB_USER}} -d {{.DB_NAME}}
-        done
+      - docker compose --profile migration run --rm migrate up
 
   migrate-down:
-    desc: Roll back SQL migrations in reverse order using psql inside Postgres container
+    desc: Roll back all migrations in the standalone Docker PostgreSQL service
     cmds:
-      - |
-        set -euo pipefail
-        for f in $(ls migrations/*down.sql | sort -r); do
-          echo "==> running $f"
-          cat "$f" | docker compose exec -T {{.DB_CONTAINER}} psql -U {{.DB_USER}} -d {{.DB_NAME}}
-        done
+      - docker compose --profile migration run --rm migrate down
 
   down:
     desc: Stop containers
@@ -46,9 +36,19 @@ tasks:
       - docker compose down
 
   migrate-status:
-    desc: Show migration status (list tables)
+    desc: Show migration status for the standalone Docker PostgreSQL service
     cmds:
-      - docker compose exec -T {{.DB_CONTAINER}} psql -U {{.DB_USER}} -d {{.DB_NAME}} -c "SELECT tablename FROM pg_tables WHERE schemaname = 'public';"
+      - docker compose --profile migration run --rm migrate status
+
+  migrate:native:
+    desc: Apply migrations to shared native PostgreSQL using the infrastructure local environment
+    cmds:
+      - python3 scripts/native_config.py -- go run ./cmd/user-service-migrate up
+
+  migrate:native-status:
+    desc: Inspect shared native PostgreSQL migration state without reading table rows
+    cmds:
+      - python3 scripts/native_config.py -- go run ./cmd/user-service-migrate status
 
   create-rbac-db:
     desc: Create rbacdb database in the same Postgres instance if it does not exist
@@ -67,12 +67,18 @@ tasks:
   run:
     desc: Run service locally
     cmds:
-      - go run ./cmd/ms-go-user
+      - go run ./cmd/user-service
+
+  run:native:
+    desc: Run User Service on macOS against shared PostgreSQL and NATS
+    cmds:
+      - python3 scripts/native_config.py -- go run ./cmd/user-service
 
   test:
     desc: Run tests
     cmds:
       - go test ./...
+      - python3 test/unit/native_config_test.py
 
   lint:
     desc: Run linter
