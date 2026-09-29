@@ -23,6 +23,39 @@ jobs:
           go-version-file: go.mod
           cache: true
 
+      - name: Install pinned golangci-lint
+        run: |
+          set -euo pipefail
+          mkdir -p "$GITHUB_WORKSPACE/.cache/bin"
+          GOTOOLCHAIN=go1.24.4 GOBIN="$GITHUB_WORKSPACE/.cache/bin" go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.8
+          echo "$GITHUB_WORKSPACE/.cache/bin" >> "$GITHUB_PATH"
+
+      - name: Verify pinned golangci-lint
+        run: |
+          set -euo pipefail
+          expected="$GITHUB_WORKSPACE/.cache/bin/golangci-lint"
+          resolved="$(command -v golangci-lint)"
+          if [[ "$resolved" != "$expected" ]]; then
+            echo "Unexpected golangci-lint path: $resolved" >&2
+            exit 1
+          fi
+
+          version_output="$("$resolved" version)"
+          printf '%s\n' "$version_output"
+          if [[ "$version_output" != *"has version v1.64.8 built with go1.24.4"* ]]; then
+            echo "golangci-lint version/build toolchain mismatch" >&2
+            exit 1
+          fi
+
+          build_info="$(go version -m "$resolved")"
+          build_toolchain="$(sed -n '1s/^.*: //p' <<< "$build_info")"
+          module_version="$(awk '$1 == "mod" && $2 == "github.com/golangci/golangci-lint" { print $3 }' <<< "$build_info")"
+          if [[ "$build_toolchain" != "go1.24.4" || "$module_version" != "v1.64.8" ]]; then
+            echo "golangci-lint build metadata mismatch" >&2
+            printf '%s\n' "$build_info" >&2
+            exit 1
+          fi
+
       - name: Set up Node 20
         uses: actions/setup-node@v4
         with:
