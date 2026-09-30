@@ -1,3 +1,4 @@
+// Package v1 registers administrative user management routes.
 package v1
 
 import (

@@ -10,18 +10,22 @@ import (
 	res "github.com/example/user-service/pkg/http"
 )
 
+// RBACMiddleware checks user roles and permissions before route execution.
 type RBACMiddleware struct {
 	client rbacclient.Client
 }
 
+// NewRBACMiddleware creates role and permission middleware backed by client.
 func NewRBACMiddleware(client rbacclient.Client) *RBACMiddleware {
 	return &RBACMiddleware{client: client}
 }
 
+// RequireRole permits a request only when the user has role.
 func (m *RBACMiddleware) RequireRole(role string) echo.MiddlewareFunc {
 	return m.requireRoles([]string{role})
 }
 
+// RequireAnyRole permits a request when the user has any listed role.
 func (m *RBACMiddleware) RequireAnyRole(roles ...string) echo.MiddlewareFunc {
 	return m.requireRoles(roles)
 }
@@ -76,6 +80,7 @@ func (m *RBACMiddleware) requireRoles(roles []string) echo.MiddlewareFunc {
 	}
 }
 
+// RequirePermission permits a request only when the user has permission.
 func (m *RBACMiddleware) RequirePermission(permission string) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {

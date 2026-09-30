@@ -1,3 +1,4 @@
+// Package handlers implements the public user HTTP endpoints.
 package handlers
 
 import (
@@ -13,10 +14,11 @@ import (
 	"github.com/example/user-service/internal/infrastructure/filestorage"
 	"github.com/example/user-service/internal/infrastructure/imageprocessor"
 	"github.com/example/user-service/internal/transport/http/middleware"
-	"github.com/example/user-service/internal/usecase"
+	service "github.com/example/user-service/internal/usecase"
 	res "github.com/example/user-service/pkg/http"
 )
 
+// Handler serves public user profile and avatar requests.
 type Handler struct {
 	users        service.UserService
 	storage      filestorage.Client
@@ -25,6 +27,7 @@ type Handler struct {
 	avatarKind   string
 }
 
+// NewHandler creates the public user handler and its avatar dependencies.
 func NewHandler(users service.UserService, storage filestorage.Client, imgProc imageprocessor.Client, avatarPreset, avatarKind string) *Handler {
 	return &Handler{users: users, storage: storage, imageProc: imgProc, avatarPreset: avatarPreset, avatarKind: avatarKind}
 }
@@ -71,6 +74,7 @@ type attachIdentityRequest struct {
 	AvatarURL      *string `json:"avatar_url"`
 }
 
+// RegisterRoutes attaches the public user routes to g.
 func (h *Handler) RegisterRoutes(g *echo.Group) {
 	g.GET("/me", h.GetMe)
 	g.GET("/:id", h.GetByID)
@@ -81,6 +85,7 @@ func (h *Handler) RegisterRoutes(g *echo.Group) {
 	g.DELETE("/me/identities/:provider/:provider_user_id", h.RemoveIdentity)
 }
 
+// GetMe returns the authenticated user's profile.
 func (h *Handler) GetMe(c echo.Context) error {
 	userID := c.Get("user_id").(string)
 	user, err := h.users.GetMe(c.Request().Context(), userID)
@@ -90,6 +95,7 @@ func (h *Handler) GetMe(c echo.Context) error {
 	return res.JSON(c, http.StatusOK, h.newSelfUserResponse(user))
 }
 
+// GetByID returns the public profile for the requested user.
 func (h *Handler) GetByID(c echo.Context) error {
 	userID := c.Param("id")
 	requester := c.Get("user_id").(string)
@@ -100,6 +106,7 @@ func (h *Handler) GetByID(c echo.Context) error {
 	return res.JSON(c, http.StatusOK, h.newPublicUserResponse(user))
 }
 
+// UpdateProfile changes the authenticated user's editable profile fields.
 func (h *Handler) UpdateProfile(c echo.Context) error {
 	var req updateProfileRequest
 	decoder := json.NewDecoder(c.Request().Body)
@@ -118,6 +125,7 @@ func (h *Handler) UpdateProfile(c echo.Context) error {
 	return res.JSON(c, http.StatusOK, h.newProfileResponse(profile))
 }
 
+// AttachIdentity links a provider identity to the authenticated user.
 func (h *Handler) AttachIdentity(c echo.Context) error {
 	req := new(attachIdentityRequest)
 	if err := c.Bind(req); err != nil {
@@ -132,6 +140,7 @@ func (h *Handler) AttachIdentity(c echo.Context) error {
 	return res.JSON(c, http.StatusCreated, map[string]interface{}{"identity": identity, "profile": h.decorateProfile(profile)})
 }
 
+// RemoveIdentity detaches the selected provider identity from the user.
 func (h *Handler) RemoveIdentity(c echo.Context) error {
 	provider := domain.IdentityProvider(strings.ToLower(c.Param("provider")))
 	providerUserID := c.Param("provider_user_id")
@@ -142,6 +151,7 @@ func (h *Handler) RemoveIdentity(c echo.Context) error {
 	return res.JSON(c, http.StatusOK, map[string]string{"status": "detached"})
 }
 
+// ListMyIdentities returns the identities linked to the authenticated user.
 func (h *Handler) ListMyIdentities(c echo.Context) error {
 	userID := c.Get("user_id").(string)
 	identities, err := h.users.ListIdentities(c.Request().Context(), userID)
@@ -153,6 +163,7 @@ func (h *Handler) ListMyIdentities(c echo.Context) error {
 
 const maxAvatarSize = 5 * 1024 * 1024
 
+// UploadAvatar stores the authenticated user's avatar and returns its file ID.
 func (h *Handler) UploadAvatar(c echo.Context) error {
 	fileHeader, err := c.FormFile("file")
 	if err != nil {
@@ -162,7 +173,7 @@ func (h *Handler) UploadAvatar(c echo.Context) error {
 	if err != nil {
 		return res.ErrorJSON(c, http.StatusBadRequest, "bad_request", "file open failed", middleware.RequestIDFromCtx(c), nil)
 	}
-	defer src.Close()
+	defer func() { _ = src.Close() }()
 
 	data, err := io.ReadAll(io.LimitReader(src, maxAvatarSize+1))
 	if err != nil {

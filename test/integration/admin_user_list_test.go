@@ -13,12 +13,12 @@ import (
 
 	"github.com/example/user-service/internal/domain"
 	adminv1 "github.com/example/user-service/internal/transport/http/admin/v1/handlers"
-	"github.com/example/user-service/internal/usecase"
+	service "github.com/example/user-service/internal/usecase"
 )
 
 func TestAdminUserListRoute(t *testing.T) {
 	stub := &manageServiceStub{}
-	stub.listUsersFn = func(ctx context.Context, offset, limit int) ([]domain.User, int64, error) {
+	stub.listUsersFn = func(_ context.Context, offset, limit int) ([]domain.User, int64, error) {
 		require.Equal(t, 20, offset)
 		require.Equal(t, 10, limit)
 		return []domain.User{{ID: "user-1"}, {ID: "user-2"}}, 42, nil
@@ -51,23 +51,23 @@ type manageServiceStub struct {
 	listUsersFn func(ctx context.Context, offset, limit int) ([]domain.User, int64, error)
 }
 
-func (s *manageServiceStub) GetUser(ctx context.Context, userID string) (*domain.User, error) {
+func (s *manageServiceStub) GetUser(_ context.Context, _ string) (*domain.User, error) {
 	return nil, errors.New("not implemented")
 }
 
-func (s *manageServiceStub) CreateUser(ctx context.Context, req service.CreateUserRequest) (*domain.User, error) {
+func (s *manageServiceStub) CreateUser(_ context.Context, _ service.CreateUserRequest) (*domain.User, error) {
 	return nil, errors.New("not implemented")
 }
 
-func (s *manageServiceStub) UpdateUser(ctx context.Context, userID string, req service.UpdateUserRequest) (*domain.User, error) {
+func (s *manageServiceStub) UpdateUser(_ context.Context, _ string, _ service.UpdateUserRequest) (*domain.User, error) {
 	return nil, errors.New("not implemented")
 }
 
-func (s *manageServiceStub) ChangeStatus(ctx context.Context, userID string, status domain.UserStatus) (*domain.User, error) {
+func (s *manageServiceStub) ChangeStatus(_ context.Context, _ string, _ domain.UserStatus) (*domain.User, error) {
 	return nil, errors.New("not implemented")
 }
 
-func (s *manageServiceStub) ChangeRole(ctx context.Context, userID, role string) error {
+func (s *manageServiceStub) ChangeRole(_ context.Context, _, _ string) error {
 	return errors.New("not implemented")
 }
 

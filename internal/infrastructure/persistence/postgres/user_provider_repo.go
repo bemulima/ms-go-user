@@ -8,6 +8,7 @@ import (
 	"github.com/example/user-service/internal/domain"
 )
 
+// UserProviderRepository stores and retrieves linked provider accounts.
 type UserProviderRepository interface {
 	Create(ctx context.Context, provider *domain.UserProvider) error
 	Update(ctx context.Context, provider *domain.UserProvider) error
@@ -20,6 +21,7 @@ type gormUserProviderRepository struct {
 	db *gorm.DB
 }
 
+// NewUserProviderRepository creates a PostgreSQL-backed provider repository.
 func NewUserProviderRepository(db *gorm.DB) UserProviderRepository {
 	return &gormUserProviderRepository{db: db}
 }

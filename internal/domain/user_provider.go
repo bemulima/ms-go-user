@@ -21,6 +21,7 @@ type UserProvider struct {
 // JSONMap provides database marshaling helpers for JSONB columns.
 type JSONMap map[string]interface{}
 
+// Value encodes JSONMap as JSON text for database/sql drivers.
 func (m JSONMap) Value() (driver.Value, error) {
 	if m == nil {
 		return nil, nil
@@ -32,6 +33,7 @@ func (m JSONMap) Value() (driver.Value, error) {
 	return string(b), nil
 }
 
+// Scan decodes a database JSON value into the map.
 func (m *JSONMap) Scan(value interface{}) error {
 	if value == nil {
 		*m = nil
@@ -56,6 +58,7 @@ func (m *JSONMap) Scan(value interface{}) error {
 	return nil
 }
 
+// TableName maps provider links to the persisted user_provider table.
 func (UserProvider) TableName() string {
 	return "user_provider"
 }

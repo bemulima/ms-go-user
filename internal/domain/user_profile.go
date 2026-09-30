@@ -5,6 +5,8 @@ import (
 	"time"
 )
 
+// UserProfile stores display and imported profile fields separately from account state.
+// AvatarURL is computed for responses and is not persisted.
 type UserProfile struct {
 	ID           string    `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
 	UserID       string    `gorm:"type:uuid;not null;uniqueIndex" json:"user_id"`
@@ -19,6 +21,7 @@ type UserProfile struct {
 	UpdatedAt    time.Time `gorm:"column:updated_at;autoUpdateTime" json:"updated_at"`
 }
 
+// FillOAuthData fills only missing fields with normalized, bounded provider values.
 func (p *UserProfile) FillOAuthData(firstName, lastName string, birthYear *int, gender string, currentYear int) {
 	if p.FirstName == nil {
 		p.FirstName = normalizedProfileText(firstName, 128)
@@ -43,10 +46,12 @@ func normalizedProfileText(value string, maxLength int) *string {
 	return &value
 }
 
+// TableName maps profiles to the persisted user_profile table.
 func (UserProfile) TableName() string {
 	return "user_profile"
 }
 
+// Update applies supplied display-name and avatar-reference changes.
 func (p *UserProfile) Update(displayName, avatarFileID *string) {
 	if displayName != nil {
 		name := strings.TrimSpace(*displayName)
@@ -69,6 +74,7 @@ func (p *UserProfile) Update(displayName, avatarFileID *string) {
 	}
 }
 
+// WithAvatarURL derives a response URL from the stored avatar file reference.
 func (p *UserProfile) WithAvatarURL(urlResolver func(string) string) {
 	if p == nil || p.AvatarFileID == nil || urlResolver == nil {
 		return

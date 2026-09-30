@@ -23,7 +23,7 @@ func TestUploadAvatar_Success(t *testing.T) {
 
 	fs := &stubFilestorage{}
 	us := &stubUserService{
-		setAvatarFileIDFn: func(ctx context.Context, userID, avatarFileID string) (*domain.UserProfile, error) {
+		setAvatarFileIDFn: func(_ context.Context, userID, avatarFileID string) (*domain.UserProfile, error) {
 			require.Equal(t, "user-1", userID)
 			require.Equal(t, "file-123", avatarFileID)
 			return &domain.UserProfile{UserID: userID, AvatarFileID: &avatarFileID}, nil
@@ -195,7 +195,7 @@ type stubFilestorage struct {
 	delegationTTLSeconds int64
 }
 
-func (s *stubFilestorage) Upload(ctx context.Context, req filestorage.UploadRequest) (*filestorage.UploadResponse, error) {
+func (s *stubFilestorage) Upload(_ context.Context, req filestorage.UploadRequest) (*filestorage.UploadResponse, error) {
 	s.uploadReq = req
 	if s.uploadErr != nil {
 		return nil, s.uploadErr
@@ -203,7 +203,7 @@ func (s *stubFilestorage) Upload(ctx context.Context, req filestorage.UploadRequ
 	return &filestorage.UploadResponse{ID: "file-123"}, nil
 }
 
-func (s *stubFilestorage) SignedURL(ctx context.Context, id string, expiresMinutes int64) (string, error) {
+func (s *stubFilestorage) SignedURL(_ context.Context, id string, _ int64) (string, error) {
 	return "http://filestorage/files/" + id + "/signed", nil
 }
 
@@ -232,7 +232,7 @@ type stubImageProc struct {
 	err            error
 }
 
-func (s *stubImageProc) GenerateWithDelegation(ctx context.Context, originalID, ownerID, fileKind, presetGroup string, variants []string, processingDelegation string) error {
+func (s *stubImageProc) GenerateWithDelegation(_ context.Context, originalID, ownerID, fileKind, presetGroup string, _ []string, processingDelegation string) error {
 	s.lastOriginal = originalID
 	s.lastOwner = ownerID
 	s.lastKind = fileKind
@@ -246,10 +246,10 @@ type stubUserService struct {
 	setAvatarFileIDFn func(ctx context.Context, userID, avatarFileID string) (*domain.UserProfile, error)
 }
 
-func (s *stubUserService) GetMe(ctx context.Context, userID string) (*domain.User, error) {
+func (s *stubUserService) GetMe(_ context.Context, _ string) (*domain.User, error) {
 	return nil, nil
 }
-func (s *stubUserService) GetByID(ctx context.Context, requesterID, targetID string) (*domain.User, error) {
+func (s *stubUserService) GetByID(_ context.Context, _, _ string) (*domain.User, error) {
 	return nil, nil
 }
 func (s *stubUserService) UpdateProfile(ctx context.Context, userID string, displayName *string) (*domain.UserProfile, error) {
@@ -264,18 +264,18 @@ func (s *stubUserService) SetAvatarFileID(ctx context.Context, userID, avatarFil
 	}
 	return &domain.UserProfile{UserID: userID, AvatarFileID: &avatarFileID}, nil
 }
-func (s *stubUserService) StartEmailChange(ctx context.Context, userID, newEmail string) (string, error) {
+func (s *stubUserService) StartEmailChange(_ context.Context, _, _ string) (string, error) {
 	return "", nil
 }
-func (s *stubUserService) VerifyEmailChange(ctx context.Context, userID, uuid, code string) (*domain.User, error) {
+func (s *stubUserService) VerifyEmailChange(_ context.Context, _, _, _ string) (*domain.User, error) {
 	return nil, nil
 }
-func (s *stubUserService) AttachIdentity(ctx context.Context, userID string, provider domain.IdentityProvider, providerUserID, email string, displayName, avatarURL *string) (*domain.UserIdentity, *domain.UserProfile, error) {
+func (s *stubUserService) AttachIdentity(_ context.Context, _ string, _ domain.IdentityProvider, _, _ string, _, _ *string) (*domain.UserIdentity, *domain.UserProfile, error) {
 	return nil, nil, nil
 }
-func (s *stubUserService) RemoveIdentity(ctx context.Context, userID string, provider domain.IdentityProvider, providerUserID string) error {
+func (s *stubUserService) RemoveIdentity(_ context.Context, _ string, _ domain.IdentityProvider, _ string) error {
 	return nil
 }
-func (s *stubUserService) ListIdentities(ctx context.Context, userID string) ([]domain.UserIdentity, error) {
+func (s *stubUserService) ListIdentities(_ context.Context, _ string) ([]domain.UserIdentity, error) {
 	return nil, nil
 }

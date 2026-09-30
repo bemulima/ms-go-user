@@ -1,3 +1,4 @@
+// Package handlers implements the administrative user HTTP endpoints.
 package handlers
 
 import (
@@ -13,15 +14,17 @@ import (
 	"github.com/example/user-service/internal/domain"
 	"github.com/example/user-service/internal/infrastructure/filestorage"
 	"github.com/example/user-service/internal/transport/http/middleware"
-	"github.com/example/user-service/internal/usecase"
+	service "github.com/example/user-service/internal/usecase"
 	res "github.com/example/user-service/pkg/http"
 )
 
+// Handler serves administrative user-management requests.
 type Handler struct {
 	service service.UserManageService
 	storage filestorage.Client
 }
 
+// NewHandler creates the administrative user handler.
 func NewHandler(s service.UserManageService, storage filestorage.Client) *Handler {
 	return &Handler{service: s, storage: storage}
 }
@@ -72,6 +75,7 @@ const (
 	maxPerPage     = 100
 )
 
+// RegisterRoutes attaches the administrative user routes to g.
 func (h *Handler) RegisterRoutes(g *echo.Group) {
 	g.GET("", h.ListUsers)
 	g.GET("/:id", h.GetUser)
@@ -81,6 +85,7 @@ func (h *Handler) RegisterRoutes(g *echo.Group) {
 	g.PATCH("/:id/role", h.ChangeRole)
 }
 
+// ListUsers returns a paginated list of users.
 func (h *Handler) ListUsers(c echo.Context) error {
 	page := 1
 	if raw := strings.TrimSpace(c.QueryParam("page")); raw != "" {
@@ -115,6 +120,7 @@ func (h *Handler) ListUsers(c echo.Context) error {
 	})
 }
 
+// GetUser returns the requested user's administrative view.
 func (h *Handler) GetUser(c echo.Context) error {
 	userID := c.Param("id")
 	user, err := h.service.GetUser(c.Request().Context(), userID)
@@ -128,6 +134,7 @@ func (h *Handler) GetUser(c echo.Context) error {
 	return res.JSON(c, http.StatusOK, h.newUserResponse(user))
 }
 
+// CreateUser creates a user from an administrative request.
 func (h *Handler) CreateUser(c echo.Context) error {
 	req := new(createManageUserRequest)
 	if err := c.Bind(req); err != nil {
@@ -148,6 +155,7 @@ func (h *Handler) CreateUser(c echo.Context) error {
 	return res.JSON(c, http.StatusCreated, h.newUserResponse(user))
 }
 
+// UpdateUser changes the requested user's administrative profile fields.
 func (h *Handler) UpdateUser(c echo.Context) error {
 	req := new(updateManageUserRequest)
 	if err := c.Bind(req); err != nil {
@@ -170,6 +178,7 @@ func (h *Handler) UpdateUser(c echo.Context) error {
 	return res.JSON(c, http.StatusOK, h.newUserResponse(user))
 }
 
+// ChangeStatus updates the requested user's lifecycle status.
 func (h *Handler) ChangeStatus(c echo.Context) error {
 	req := new(changeStatusRequest)
 	if err := c.Bind(req); err != nil {
@@ -188,6 +197,7 @@ func (h *Handler) ChangeStatus(c echo.Context) error {
 	return res.JSON(c, http.StatusOK, h.newUserResponse(user))
 }
 
+// ChangeRole changes the requested user's role through the service layer.
 func (h *Handler) ChangeRole(c echo.Context) error {
 	req := new(changeRoleRequest)
 	if err := c.Bind(req); err != nil {

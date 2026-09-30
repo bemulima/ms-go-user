@@ -1,3 +1,4 @@
+// Package http composes the public, administrative, and private HTTP routes.
 package http
 
 import (
@@ -17,6 +18,7 @@ import (
 	service "github.com/example/user-service/internal/usecase"
 )
 
+// Router configures the service's Echo server and route groups.
 type Router struct {
 	cfg          *config.Config
 	apiHandler   *apihandlers.Handler
@@ -31,6 +33,7 @@ func NewRouter(cfg *config.Config, apiHandler *apihandlers.Handler, adminHandler
 	return &Router{cfg: cfg, apiHandler: apiHandler, adminHandler: adminHandler, activeUsers: activeUsers, authMW: authMW, rbacMW: rbacMW}
 }
 
+// Setup installs middleware and registers all HTTP route groups on e.
 func (r *Router) Setup(e *echo.Echo) {
 	e.HideBanner = true
 	e.Use(middleware.Recover())

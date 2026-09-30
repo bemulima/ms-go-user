@@ -1,3 +1,4 @@
+// Package private registers authenticated internal HTTP routes.
 package private
 
 import (

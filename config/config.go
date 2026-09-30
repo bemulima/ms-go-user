@@ -1,3 +1,4 @@
+// Package config loads environment-backed settings for the user service.
 package config
 
 import (
@@ -8,6 +9,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
+// Config contains the user service's network, persistence, and integration settings.
 type Config struct {
 	AppName          string `env:"APP_NAME" envDefault:"user-service"`
 	AppEnv           string `env:"APP_ENV" envDefault:"local"`
@@ -58,6 +60,7 @@ type Config struct {
 	RateLimitPerMin  int    `env:"RATE_LIMIT_PER_MIN" envDefault:"120"`
 }
 
+// Load reads optional dotenv values and parses the process environment.
 func Load() (*Config, error) {
 	_ = godotenv.Load()
 	cfg := &Config{}
@@ -67,6 +70,7 @@ func Load() (*Config, error) {
 	return cfg, nil
 }
 
+// MustLoad loads configuration and terminates the process if parsing fails.
 func MustLoad() *Config {
 	cfg, err := Load()
 	if err != nil {

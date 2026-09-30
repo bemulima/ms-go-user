@@ -10,6 +10,7 @@ import (
 	"github.com/example/user-service/internal/port"
 )
 
+// OAuthProfileInput contains provider-supplied fields eligible for missing-field import.
 type OAuthProfileInput struct {
 	Provider  string
 	FirstName string
@@ -19,6 +20,7 @@ type OAuthProfileInput struct {
 	AvatarURL string
 }
 
+// OAuthProfileImporter applies eligible provider profile fields and optional avatar data.
 type OAuthProfileImporter interface {
 	Import(ctx context.Context, profile *domain.UserProfile, input OAuthProfileInput) error
 }
@@ -30,6 +32,7 @@ type oauthProfileImporter struct {
 	avatarKind   string
 }
 
+// NewOAuthProfileImporter wires profile persistence, avatar download, and storage ports.
 func NewOAuthProfileImporter(
 	profiles port.UserProfileWriter,
 	storage port.OAuthAvatarStorage,

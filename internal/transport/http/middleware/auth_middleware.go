@@ -1,3 +1,4 @@
+// Package middleware provides authentication and authorization for HTTP routes.
 package middleware
 
 import (
@@ -20,6 +21,7 @@ import (
 
 const roleCheckSubject = "rbac.checkRole"
 
+// AuthMiddleware resolves request identity and attaches it to the Echo context.
 type AuthMiddleware struct {
 	cfg    *config.Config
 	logger pkglog.Logger
@@ -29,16 +31,20 @@ type AuthMiddleware struct {
 	verify TokenVerifier
 }
 
+// TokenVerifier validates a token and returns its user ID, role, and email.
 type TokenVerifier func(ctx context.Context, token string) (string, string, string, error)
 
+// NewAuthMiddleware creates authentication middleware using the configured auth service.
 func NewAuthMiddleware(cfg *config.Config, logger pkglog.Logger, rbac rbacclient.Client, users repo.UserRepository, natsConn *nats.Conn) *AuthMiddleware {
 	return &AuthMiddleware{cfg: cfg, logger: logger, rbac: rbac, users: users, nats: natsConn}
 }
 
+// NewAuthMiddlewareWithVerifier creates authentication middleware with a local verifier.
 func NewAuthMiddlewareWithVerifier(cfg *config.Config, logger pkglog.Logger, rbac rbacclient.Client, users repo.UserRepository, natsConn *nats.Conn, verifier TokenVerifier) *AuthMiddleware {
 	return &AuthMiddleware{cfg: cfg, logger: logger, rbac: rbac, users: users, nats: natsConn, verify: verifier}
 }
 
+// Handler returns Echo middleware that authenticates a request before calling next.
 func (a *AuthMiddleware) Handler(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		var (

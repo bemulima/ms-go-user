@@ -1,3 +1,4 @@
+// Package rbac provides the User service's role and permission client.
 package rbac
 
 import (
@@ -13,6 +14,7 @@ import (
 	"github.com/cenkalti/backoff/v4"
 )
 
+// Client reads role and permission decisions and assigns roles for a user.
 type Client interface {
 	GetRoleByUserID(ctx context.Context, userID string) (string, error)
 	GetPermissionsByUserID(ctx context.Context, userID string) ([]string, error)
@@ -38,10 +40,12 @@ type cachingClient struct {
 	mu       sync.RWMutex
 }
 
+// NewHTTPClient creates an HTTP client for the RBAC service.
 func NewHTTPClient(baseURL string, timeout time.Duration) Client {
 	return &httpClient{baseURL: baseURL, client: &http.Client{Timeout: timeout}}
 }
 
+// NewCachingClient wraps an RBAC client with a time-limited in-memory cache.
 func NewCachingClient(delegate Client, ttl time.Duration) Client {
 	return &cachingClient{delegate: delegate, ttl: ttl, cache: map[string]cacheEntry{}}
 }
@@ -107,7 +111,7 @@ func (c *httpClient) get(ctx context.Context, path string, params url.Values, ou
 		if err != nil {
 			return err
 		}
-		defer res.Body.Close()
+		defer func() { _ = res.Body.Close() }()
 		if res.StatusCode >= 400 {
 			return fmt.Errorf("rbac error: status %d", res.StatusCode)
 		}
@@ -139,7 +143,7 @@ func (c *httpClient) sendJSON(ctx context.Context, method, path string, payload 
 		if err != nil {
 			return err
 		}
-		defer res.Body.Close()
+		defer func() { _ = res.Body.Close() }()
 		if res.StatusCode >= 400 {
 			return fmt.Errorf("rbac error: status %d", res.StatusCode)
 		}

@@ -1,3 +1,4 @@
+// Package filestorage provides the User service's FileStorage HTTP client.
 package filestorage
 
 import (
@@ -12,6 +13,9 @@ import (
 	"time"
 )
 
+// Client uploads files and requests short-lived download capabilities.
+// DownloadURL intentionally returns no direct URL because FileStorage proxy
+// routes require a service credential; callers should use SignedURL instead.
 type Client interface {
 	Upload(ctx context.Context, req UploadRequest) (*UploadResponse, error)
 	SignedURL(ctx context.Context, id string, expiresMinutes int64) (string, error)
@@ -24,6 +28,7 @@ type ProcessingDelegationClient interface {
 	CreateProcessingDelegation(ctx context.Context, fileID, ownerID, delegateService, scope string, ttlSeconds int64) (string, error)
 }
 
+// UploadRequest contains the owner and metadata for a file upload.
 type UploadRequest struct {
 	OwnerID        string
 	FileKind       string
@@ -33,6 +38,7 @@ type UploadRequest struct {
 	Data           []byte
 }
 
+// UploadResponse identifies the stored FileStorage object.
 type UploadResponse struct {
 	ID string `json:"id"`
 }
@@ -62,6 +68,7 @@ type processingDelegationResponse struct {
 	Delegation string `json:"delegation"`
 }
 
+// NewHTTPClient creates a FileStorage client authenticated with the internal token.
 func NewHTTPClient(baseURL, internalToken string, timeout time.Duration) Client {
 	return &httpClient{
 		baseURL:       baseURL,
@@ -110,7 +117,7 @@ func (c *httpClient) Upload(ctx context.Context, req UploadRequest) (*UploadResp
 	if err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if res.StatusCode >= 400 {
 		data, _ := io.ReadAll(res.Body)
@@ -149,7 +156,7 @@ func (c *httpClient) SignedURL(ctx context.Context, id string, expiresMinutes in
 	if err != nil {
 		return "", err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 	if res.StatusCode >= 400 {
 		data, _ := io.ReadAll(res.Body)
 		return "", fmt.Errorf("filestorage error: status %d: %s", res.StatusCode, string(data))
@@ -194,7 +201,7 @@ func (c *httpClient) CreateProcessingDelegation(ctx context.Context, fileID, own
 	if err != nil {
 		return "", err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 	if res.StatusCode >= http.StatusBadRequest {
 		data, _ := io.ReadAll(res.Body)
 		return "", fmt.Errorf("filestorage error: status %d: %s", res.StatusCode, string(data))
@@ -210,7 +217,9 @@ func (c *httpClient) CreateProcessingDelegation(ctx context.Context, fileID, own
 	return response.Delegation, nil
 }
 
-func (c *httpClient) DownloadURL(id string) string {
+// DownloadURL preserves the profile URL resolver contract without exposing a
+// private FileStorage proxy URL. Use SignedURL for an authorized download link.
+func (c *httpClient) DownloadURL(_ string) string {
 	return ""
 }
 func (c *httpClient) authorize(req *http.Request) {

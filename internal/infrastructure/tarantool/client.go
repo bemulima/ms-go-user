@@ -1,3 +1,4 @@
+// Package tarantool provides the User service's legacy registration client.
 package tarantool
 
 import (
@@ -11,6 +12,7 @@ import (
 	"github.com/cenkalti/backoff/v4"
 )
 
+// Client starts or verifies registration and email-change requests.
 type Client interface {
 	StartRegistration(ctx context.Context, email, password string) (string, error)
 	VerifyRegistration(ctx context.Context, uuid, code string) (*VerificationResult, error)
@@ -18,6 +20,7 @@ type Client interface {
 	VerifyEmailChange(ctx context.Context, uuid, code string) (*VerificationResult, error)
 }
 
+// VerificationResult contains the values returned after a registration check.
 type VerificationResult struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
@@ -32,6 +35,7 @@ type response struct {
 	UUID string `json:"uuid"`
 }
 
+// NewHTTPClient creates an HTTP client for the registration service.
 func NewHTTPClient(baseURL string, timeout time.Duration) Client {
 	return &httpClient{
 		baseURL: baseURL,
@@ -95,7 +99,7 @@ func (c *httpClient) postWithRetry(ctx context.Context, path string, payload int
 		if err != nil {
 			return err
 		}
-		defer res.Body.Close()
+		defer func() { _ = res.Body.Close() }()
 		if res.StatusCode >= 400 {
 			return fmt.Errorf("tarantool error: status %d", res.StatusCode)
 		}

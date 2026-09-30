@@ -1,3 +1,4 @@
+// Package handlers implements private service-to-service HTTP endpoints.
 package handlers
 
 import (

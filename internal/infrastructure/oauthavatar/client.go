@@ -1,3 +1,4 @@
+// Package oauthavatar downloads provider avatars from allowlisted HTTPS hosts.
 package oauthavatar
 
 import (
@@ -12,18 +13,22 @@ import (
 	"github.com/example/user-service/internal/port"
 )
 
+// DefaultMaxSize is the maximum accepted avatar payload when no limit is set.
 const DefaultMaxSize int64 = 5 * 1024 * 1024
 
+// Client downloads a provider avatar after validating its source URL.
 type Client interface {
 	Download(ctx context.Context, provider, rawURL string) (*port.OAuthAvatar, error)
 }
 
+// HTTPClient downloads avatars only from provider-specific allowlisted hosts.
 type HTTPClient struct {
 	client       *http.Client
 	maxSize      int64
 	allowedHosts map[string][]string
 }
 
+// NewHTTPClient creates a provider avatar client with bounded timeout and payload size.
 func NewHTTPClient(timeout time.Duration, maxSize int64) *HTTPClient {
 	if timeout <= 0 {
 		timeout = 5 * time.Second
@@ -41,6 +46,7 @@ func NewHTTPClient(timeout time.Duration, maxSize int64) *HTTPClient {
 	}
 }
 
+// Download fetches an avatar after validating the provider host and redirects.
 func (c *HTTPClient) Download(ctx context.Context, provider, rawURL string) (*port.OAuthAvatar, error) {
 	provider = strings.ToLower(strings.TrimSpace(provider))
 	parsed, err := c.validateURL(provider, rawURL)
@@ -67,7 +73,7 @@ func (c *HTTPClient) Download(ctx context.Context, provider, rawURL string) (*po
 	if err != nil {
 		return nil, fmt.Errorf("download OAuth avatar: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
 		_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 1<<20))
 		return nil, fmt.Errorf("download OAuth avatar: %s", resp.Status)

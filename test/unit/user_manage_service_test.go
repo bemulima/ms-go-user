@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/example/user-service/internal/domain"
-	"github.com/example/user-service/internal/usecase"
+	service "github.com/example/user-service/internal/usecase"
 )
 
 func TestUserManageService_CreateUser(t *testing.T) {
@@ -141,7 +141,7 @@ func (r *manageUserRepo) Delete(_ context.Context, id string) error {
 	return nil
 }
 
-func (r *manageUserRepo) List(_ context.Context, offset, limit int) ([]domain.User, int64, error) {
+func (r *manageUserRepo) List(_ context.Context, _, _ int) ([]domain.User, int64, error) {
 	return nil, 0, nil
 }
 
@@ -178,23 +178,23 @@ type recordingRBAC struct {
 	assignedRole   string
 }
 
-func (r *recordingRBAC) GetRoleByUserID(ctx context.Context, userID string) (string, error) {
+func (r *recordingRBAC) GetRoleByUserID(_ context.Context, _ string) (string, error) {
 	return "", nil
 }
 
-func (r *recordingRBAC) GetPermissionsByUserID(ctx context.Context, userID string) ([]string, error) {
+func (r *recordingRBAC) GetPermissionsByUserID(_ context.Context, _ string) ([]string, error) {
 	return nil, nil
 }
 
-func (r *recordingRBAC) CheckPermission(ctx context.Context, userID, permission string) (bool, error) {
+func (r *recordingRBAC) CheckPermission(_ context.Context, _, _ string) (bool, error) {
 	return false, nil
 }
 
-func (r *recordingRBAC) CheckRole(ctx context.Context, userID, role string) (bool, error) {
+func (r *recordingRBAC) CheckRole(_ context.Context, _, _ string) (bool, error) {
 	return false, nil
 }
 
-func (r *recordingRBAC) AssignRole(ctx context.Context, userID, role string) error {
+func (r *recordingRBAC) AssignRole(_ context.Context, userID, role string) error {
 	r.assignedUserID = userID
 	r.assignedRole = role
 	return nil

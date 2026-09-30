@@ -1,3 +1,4 @@
+// Package v1 registers the public user API routes.
 package v1
 
 import (

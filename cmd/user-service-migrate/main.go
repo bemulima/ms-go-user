@@ -28,46 +28,56 @@ type state struct {
 }
 
 func main() {
+	if err := run(); err != nil {
+		log.Print(err)
+		os.Exit(1)
+	}
+}
+
+func run() (runErr error) {
 	action := "status"
 	if len(os.Args) > 1 {
 		action = os.Args[1]
 	}
 	if action != "status" && action != "up" && action != "down" {
-		log.Fatalf("usage: user-service-migrate [status|up|down]")
+		return fmt.Errorf("usage: user-service-migrate [status|up|down]")
 	}
 
 	dsn := os.Getenv("DB_DSN")
 	if dsn == "" {
-		log.Fatal("DB_DSN is required")
+		return errors.New("DB_DSN is required")
 	}
 
 	ctx := context.Background()
 	pool, err := pgxpool.New(ctx, dsn)
 	if err != nil {
-		log.Fatalf("connect PostgreSQL: %v", err)
+		return fmt.Errorf("connect PostgreSQL: %w", err)
 	}
 	defer pool.Close()
 	if err := pool.Ping(ctx); err != nil {
-		log.Fatalf("ping PostgreSQL: %v", err)
+		return fmt.Errorf("ping PostgreSQL: %w", err)
 	}
 
 	current, err := inspect(ctx, pool)
 	if err != nil {
-		log.Fatalf("inspect migration state: %v", err)
+		return fmt.Errorf("inspect migration state: %w", err)
 	}
 	if action == "status" {
 		printStatus(current)
-		return
+		return nil
 	}
 	if !current.historyExists && current.tableCount > 0 {
-		log.Fatalf("refusing to migrate an untracked schema with %d existing public table(s); inspect and establish migration history manually", current.tableCount)
+		return fmt.Errorf("refusing to migrate an untracked schema with %d existing public table(s); inspect and establish migration history manually", current.tableCount)
 	}
 
 	migrations, err := openMigrations(dsn)
 	if err != nil {
-		log.Fatalf("open migrations: %v", err)
+		return fmt.Errorf("open migrations: %w", err)
 	}
-	defer migrations.Close()
+	defer func() {
+		sourceErr, databaseErr := migrations.Close()
+		runErr = migrationCloseError(runErr, sourceErr, databaseErr)
+	}()
 
 	switch action {
 	case "up":
@@ -76,14 +86,29 @@ func main() {
 		err = migrations.Down()
 	}
 	if err != nil && !errors.Is(err, migrate.ErrNoChange) {
-		log.Fatalf("%s migrations: %v", action, err)
+		return fmt.Errorf("%s migrations: %w", action, err)
 	}
 
 	current, err = inspect(ctx, pool)
 	if err != nil {
-		log.Fatalf("inspect migration state after %s: %v", action, err)
+		return fmt.Errorf("inspect migration state after %s: %w", action, err)
 	}
 	printStatus(current)
+	return nil
+}
+
+func migrationCloseError(runErr, sourceErr, databaseErr error) error {
+	closeErrs := make([]error, 0, 2)
+	if sourceErr != nil {
+		closeErrs = append(closeErrs, fmt.Errorf("close migration source: %w", sourceErr))
+	}
+	if databaseErr != nil {
+		closeErrs = append(closeErrs, fmt.Errorf("close migration database: %w", databaseErr))
+	}
+	if len(closeErrs) == 0 {
+		return runErr
+	}
+	return errors.Join(runErr, errors.Join(closeErrs...))
 }
 
 func openMigrations(dsn string) (*migrate.Migrate, error) {

@@ -15,14 +15,14 @@ import (
 
 	"github.com/example/user-service/internal/domain"
 	adminv1 "github.com/example/user-service/internal/transport/http/admin/v1/handlers"
-	"github.com/example/user-service/internal/usecase"
+	service "github.com/example/user-service/internal/usecase"
 )
 
 func TestUserManageHandler_CreateUser(t *testing.T) {
 	t.Parallel()
 
 	mockSvc := &mockManageService{
-		createUserFn: func(ctx context.Context, req service.CreateUserRequest) (*domain.User, error) {
+		createUserFn: func(_ context.Context, req service.CreateUserRequest) (*domain.User, error) {
 			require.Equal(t, domain.UserStatusBlocked, req.Status)
 			return &domain.User{
 				ID:     "user-1",
@@ -60,7 +60,7 @@ func TestUserManageHandler_ListUsers_Default(t *testing.T) {
 	expected := []domain.User{{ID: "user-1"}, {ID: "user-2"}}
 	var gotOffset, gotLimit int
 	mockSvc := &mockManageService{
-		listUsersFn: func(ctx context.Context, offset, limit int) ([]domain.User, int64, error) {
+		listUsersFn: func(_ context.Context, offset, limit int) ([]domain.User, int64, error) {
 			gotOffset = offset
 			gotLimit = limit
 			return expected, 120, nil
@@ -94,7 +94,7 @@ func TestUserManageHandler_ListUsers_InvalidPer(t *testing.T) {
 
 	called := false
 	mockSvc := &mockManageService{
-		listUsersFn: func(ctx context.Context, offset, limit int) ([]domain.User, int64, error) {
+		listUsersFn: func(_ context.Context, _, _ int) ([]domain.User, int64, error) {
 			called = true
 			return nil, 0, nil
 		},
@@ -114,7 +114,7 @@ func TestUserManageHandler_UpdateUser_NotFound(t *testing.T) {
 	t.Parallel()
 
 	mockSvc := &mockManageService{
-		updateUserFn: func(ctx context.Context, userID string, req service.UpdateUserRequest) (*domain.User, error) {
+		updateUserFn: func(_ context.Context, _ string, _ service.UpdateUserRequest) (*domain.User, error) {
 			return nil, gorm.ErrRecordNotFound
 		},
 	}
@@ -135,7 +135,7 @@ func TestUserManageHandler_ChangeStatus(t *testing.T) {
 	t.Parallel()
 
 	mockSvc := &mockManageService{
-		changeStatusFn: func(ctx context.Context, userID string, status domain.UserStatus) (*domain.User, error) {
+		changeStatusFn: func(_ context.Context, userID string, status domain.UserStatus) (*domain.User, error) {
 			return &domain.User{ID: userID, Status: status, Profile: &domain.UserProfile{UserID: userID}}, nil
 		},
 	}
@@ -162,7 +162,7 @@ func TestUserManageHandler_ChangeRole_Error(t *testing.T) {
 	t.Parallel()
 
 	mockSvc := &mockManageService{
-		changeRoleFn: func(ctx context.Context, userID, role string) error {
+		changeRoleFn: func(_ context.Context, _, _ string) error {
 			return errors.New("bad role")
 		},
 	}

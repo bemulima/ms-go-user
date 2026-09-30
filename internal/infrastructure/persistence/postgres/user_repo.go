@@ -8,6 +8,7 @@ import (
 	"github.com/example/user-service/internal/domain"
 )
 
+// UserRepository stores and retrieves user lifecycle records.
 type UserRepository interface {
 	Create(ctx context.Context, user *domain.User) error
 	Update(ctx context.Context, user *domain.User) error
@@ -21,6 +22,7 @@ type gormUserRepository struct {
 	db *gorm.DB
 }
 
+// NewUserRepository creates a PostgreSQL-backed user repository.
 func NewUserRepository(db *gorm.DB) UserRepository {
 	return &gormUserRepository{db: db}
 }

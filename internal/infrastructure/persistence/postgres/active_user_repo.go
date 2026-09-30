@@ -1,4 +1,4 @@
-// Package repo contains PostgreSQL persistence adapters for user data.
+// Package postgres contains PostgreSQL persistence adapters for user data.
 package postgres
 
 import (

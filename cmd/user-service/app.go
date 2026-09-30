@@ -1,3 +1,4 @@
+// Package main wires the user service's configuration, persistence, and transports.
 package main
 
 import (
@@ -31,6 +32,7 @@ import (
 	pkglog "github.com/example/user-service/pkg/log"
 )
 
+// App holds the running service components and their open resources.
 type App struct {
 	cfg      *config.Config
 	logger   pkglog.Logger
@@ -39,7 +41,8 @@ type App struct {
 	natsConn *nats.Conn
 }
 
-func New(ctx context.Context) (*App, error) {
+// New assembles the user service and its configured adapters.
+func New(_ context.Context) (*App, error) {
 	cfg := config.MustLoad()
 	logger := pkglog.New(cfg.AppEnv)
 
@@ -104,6 +107,7 @@ func New(ctx context.Context) (*App, error) {
 	return &App{cfg: cfg, logger: logger, db: db, echo: e, natsConn: natsConn}, nil
 }
 
+// Run serves HTTP requests until the context is canceled or the server stops.
 func (a *App) Run(ctx context.Context) error {
 	errCh := make(chan error, 1)
 	go func() {
@@ -126,6 +130,7 @@ func (a *App) Run(ctx context.Context) error {
 	}
 }
 
+// Close releases the service's NATS and database connections.
 func (a *App) Close() {
 	if a.natsConn != nil {
 		_ = a.natsConn.Drain()

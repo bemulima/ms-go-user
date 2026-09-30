@@ -8,6 +8,7 @@ import (
 	"github.com/example/user-service/internal/domain"
 )
 
+// UserIdentityRepository stores and retrieves linked user identities.
 type UserIdentityRepository interface {
 	Create(ctx context.Context, identity *domain.UserIdentity) error
 	FindByProviderUserID(ctx context.Context, provider domain.IdentityProvider, providerUserID string) (*domain.UserIdentity, error)
@@ -20,6 +21,7 @@ type gormUserIdentityRepository struct {
 	db *gorm.DB
 }
 
+// NewUserIdentityRepository creates a PostgreSQL-backed identity repository.
 func NewUserIdentityRepository(db *gorm.DB) UserIdentityRepository {
 	return &gormUserIdentityRepository{db: db}
 }

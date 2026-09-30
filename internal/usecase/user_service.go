@@ -10,6 +10,7 @@ import (
 	"github.com/example/user-service/internal/port"
 )
 
+// UserService exposes user profile and linked-identity operations to transports.
 type UserService interface {
 	GetMe(ctx context.Context, userID string) (*domain.User, error)
 	GetByID(ctx context.Context, requesterID, targetID string) (*domain.User, error)
@@ -26,6 +27,7 @@ type userService struct {
 	identities port.UserIdentityRepository
 }
 
+// NewUserService constructs the application service over its persistence ports.
 func NewUserService(users port.UserRepository, profiles port.UserProfileRepository, identities port.UserIdentityRepository) UserService {
 	return &userService{users: users, profiles: profiles, identities: identities}
 }
@@ -34,7 +36,7 @@ func (s *userService) GetMe(ctx context.Context, userID string) (*domain.User, e
 	return s.users.FindByID(ctx, userID)
 }
 
-func (s *userService) GetByID(ctx context.Context, requesterID, targetID string) (*domain.User, error) {
+func (s *userService) GetByID(ctx context.Context, _ string, targetID string) (*domain.User, error) {
 	return s.users.FindByID(ctx, targetID)
 }
 

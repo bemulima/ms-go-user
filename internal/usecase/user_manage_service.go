@@ -21,6 +21,8 @@ type (
 		ListUsers(ctx context.Context, offset, limit int) ([]domain.User, int64, error)
 	}
 
+	// CreateUserRequest carries legacy administrative creation fields. Credential
+	// ownership is ms-go-auth; the current User compatibility method does not persist Password.
 	CreateUserRequest struct {
 		Email        string
 		Password     string
@@ -30,6 +32,8 @@ type (
 		Status       domain.UserStatus
 	}
 
+	// UpdateUserRequest carries legacy administrative update fields. Credential
+	// ownership is ms-go-auth; the current User compatibility method does not persist Password.
 	UpdateUserRequest struct {
 		Email        *string
 		Password     *string
@@ -44,6 +48,7 @@ type userManageService struct {
 	rbac     port.RBACClient
 }
 
+// NewUserManageService constructs administrative user operations over persistence and RBAC ports.
 func NewUserManageService(users port.UserRepository, profiles port.UserProfileRepository, rbacClient port.RBACClient) UserManageService {
 	return &userManageService{users: users, profiles: profiles, rbac: rbacClient}
 }

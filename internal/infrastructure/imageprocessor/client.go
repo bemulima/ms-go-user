@@ -1,3 +1,4 @@
+// Package imageprocessor provides the User service's image processing client.
 package imageprocessor
 
 import (
@@ -10,6 +11,7 @@ import (
 	"time"
 )
 
+// Client asks Image Processor to generate variants for an owned file.
 type Client interface {
 	GenerateWithDelegation(ctx context.Context, originalID, ownerID, fileKind, presetGroup string, variants []string, processingDelegation string) error
 }
@@ -29,6 +31,7 @@ type generateRequest struct {
 	ProcessingDelegation string   `json:"processing_delegation"`
 }
 
+// NewHTTPClient creates an Image Processor client authenticated with an optional internal token.
 func NewHTTPClient(baseURL string, timeout time.Duration, internalToken ...string) Client {
 	var token string
 	if len(internalToken) > 0 {
@@ -65,7 +68,7 @@ func (c *httpClient) GenerateWithDelegation(ctx context.Context, originalID, own
 	if err != nil {
 		return err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if res.StatusCode >= 400 {
 		return fmt.Errorf("image processor responded %d", res.StatusCode)

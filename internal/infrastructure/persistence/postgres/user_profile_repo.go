@@ -8,6 +8,7 @@ import (
 	"github.com/example/user-service/internal/domain"
 )
 
+// UserProfileRepository stores and retrieves user profile data.
 type UserProfileRepository interface {
 	Create(ctx context.Context, profile *domain.UserProfile) error
 	Update(ctx context.Context, profile *domain.UserProfile) error
@@ -18,6 +19,7 @@ type gormUserProfileRepository struct {
 	db *gorm.DB
 }
 
+// NewUserProfileRepository creates a PostgreSQL-backed profile repository.
 func NewUserProfileRepository(db *gorm.DB) UserProfileRepository {
 	return &gormUserProfileRepository{db: db}
 }

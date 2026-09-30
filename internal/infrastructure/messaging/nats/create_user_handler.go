@@ -1,3 +1,4 @@
+// Package nats handles User service messages exchanged over NATS.
 package nats
 
 import (
@@ -11,12 +12,14 @@ import (
 	natsgo "github.com/nats-io/nats.go"
 )
 
+// CreateUserHandler provisions a user and imports optional OAuth profile data.
 type CreateUserHandler struct {
 	users    port.UserRepository
 	profiles port.UserProfileRepository
 	importer service.OAuthProfileImporter
 }
 
+// NewCreateUserHandler creates the user provisioning message handler.
 func NewCreateUserHandler(users port.UserRepository, profiles port.UserProfileRepository, importer service.OAuthProfileImporter) *CreateUserHandler {
 	return &CreateUserHandler{users: users, profiles: profiles, importer: importer}
 }

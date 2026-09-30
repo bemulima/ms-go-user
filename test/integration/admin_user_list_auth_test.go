@@ -20,7 +20,7 @@ import (
 
 func TestAdminUserListAuthAndRBAC(t *testing.T) {
 	users := &userRepoStub{users: map[string]*domain.User{"user-1": {ID: "user-1", Email: "user@example.com"}}}
-	verifier := func(ctx context.Context, token string) (string, string, string, error) {
+	verifier := func(_ context.Context, token string) (string, string, string, error) {
 		if token != "valid-token" {
 			return "", "", "", errors.New("invalid token")
 		}
@@ -34,7 +34,7 @@ func TestAdminUserListAuthAndRBAC(t *testing.T) {
 	rbacMW := middleware.NewRBACMiddleware(rbac)
 
 	stub := &manageServiceStub{}
-	stub.listUsersFn = func(ctx context.Context, offset, limit int) ([]domain.User, int64, error) {
+	stub.listUsersFn = func(_ context.Context, offset, limit int) ([]domain.User, int64, error) {
 		require.Equal(t, 0, offset)
 		require.Equal(t, 10, limit)
 		return []domain.User{{ID: "user-1"}}, 1, nil
@@ -71,48 +71,48 @@ type userRepoStub struct {
 	users map[string]*domain.User
 }
 
-func (r *userRepoStub) Create(ctx context.Context, user *domain.User) error { return nil }
+func (r *userRepoStub) Create(_ context.Context, _ *domain.User) error { return nil }
 
-func (r *userRepoStub) Update(ctx context.Context, user *domain.User) error {
+func (r *userRepoStub) Update(_ context.Context, user *domain.User) error {
 	r.users[user.ID] = user
 	return nil
 }
 
-func (r *userRepoStub) FindByEmail(ctx context.Context, email string) (*domain.User, error) {
+func (r *userRepoStub) FindByEmail(_ context.Context, _ string) (*domain.User, error) {
 	return nil, errors.New("not found")
 }
 
-func (r *userRepoStub) FindByID(ctx context.Context, id string) (*domain.User, error) {
+func (r *userRepoStub) FindByID(_ context.Context, id string) (*domain.User, error) {
 	if user, ok := r.users[id]; ok {
 		return user, nil
 	}
 	return nil, errors.New("not found")
 }
 
-func (r *userRepoStub) Delete(ctx context.Context, id string) error { return nil }
+func (r *userRepoStub) Delete(_ context.Context, _ string) error { return nil }
 
-func (r *userRepoStub) List(ctx context.Context, offset, limit int) ([]domain.User, int64, error) {
+func (r *userRepoStub) List(_ context.Context, _, _ int) ([]domain.User, int64, error) {
 	return nil, 0, nil
 }
 
 type rbacStub struct{}
 
-func (r *rbacStub) GetRoleByUserID(ctx context.Context, userID string) (string, error) {
+func (r *rbacStub) GetRoleByUserID(_ context.Context, _ string) (string, error) {
 	return "admin", nil
 }
 
-func (r *rbacStub) GetPermissionsByUserID(ctx context.Context, userID string) ([]string, error) {
+func (r *rbacStub) GetPermissionsByUserID(_ context.Context, _ string) ([]string, error) {
 	return nil, nil
 }
 
-func (r *rbacStub) CheckPermission(ctx context.Context, userID, permission string) (bool, error) {
+func (r *rbacStub) CheckPermission(_ context.Context, _, _ string) (bool, error) {
 	return false, nil
 }
 
-func (r *rbacStub) CheckRole(ctx context.Context, userID, role string) (bool, error) {
+func (r *rbacStub) CheckRole(_ context.Context, _, role string) (bool, error) {
 	return role == "admin", nil
 }
 
-func (r *rbacStub) AssignRole(ctx context.Context, userID, role string) error {
+func (r *rbacStub) AssignRole(_ context.Context, _, _ string) error {
 	return nil
 }
