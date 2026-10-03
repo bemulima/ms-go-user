@@ -3,54 +3,68 @@
   "consumer": {
     "repository": "bemulima/ms-go-user",
     "service": "ms-go-user",
-    "commit_sha": "540e0818befa75f39ef586440c84b157fbd5e647"
+    "commit_sha": "91c8a3803ab59cd3a9a53fc96426d66fde13e5de"
   },
   "classification": "CONSUMER_APPLICABLE",
   "source_pins": [
     {
       "repository": "bemulima/ms-go-user",
-      "commit_sha": "540e0818befa75f39ef586440c84b157fbd5e647",
+      "commit_sha": "91c8a3803ab59cd3a9a53fc96426d66fde13e5de",
       "path": "cmd/user-service/app.go",
       "blob_sha": "8a65a6e786cbbed22fa2424365c87e71f1845182",
       "content_sha256": "7456115de92949b62542875ef26070517319ed695f03f14556dc881fba5d9c1e"
     },
     {
       "repository": "bemulima/ms-go-user",
-      "commit_sha": "540e0818befa75f39ef586440c84b157fbd5e647",
+      "commit_sha": "91c8a3803ab59cd3a9a53fc96426d66fde13e5de",
       "path": "config/config.go",
       "blob_sha": "122ce769eeca66bba000b553312aaf8e997c9eb2",
       "content_sha256": "9f1b4ec148b2ae2b8a40bd29e047ff2df7ffea23b07baddb05f4096508ad3292"
     },
     {
       "repository": "bemulima/ms-go-user",
-      "commit_sha": "540e0818befa75f39ef586440c84b157fbd5e647",
+      "commit_sha": "91c8a3803ab59cd3a9a53fc96426d66fde13e5de",
       "path": "internal/infrastructure/filestorage/client.go",
       "blob_sha": "e49712263a2c398285bd351b17ce1bc0feebdf17",
       "content_sha256": "84355f0e97462e1ac57ea6ad2812bce4bd96ec5f980038823f9513112797cafe"
     },
     {
       "repository": "bemulima/ms-go-user",
-      "commit_sha": "540e0818befa75f39ef586440c84b157fbd5e647",
+      "commit_sha": "91c8a3803ab59cd3a9a53fc96426d66fde13e5de",
       "path": "internal/infrastructure/imageprocessor/client.go",
       "blob_sha": "b58ff86405dac9c4ed9b934326122049a1983ba5",
       "content_sha256": "244fffc3508e104650343dbbb69634197c26a4f3348917b453d0763744749a9f"
     },
     {
       "repository": "bemulima/ms-go-user",
-      "commit_sha": "540e0818befa75f39ef586440c84b157fbd5e647",
+      "commit_sha": "91c8a3803ab59cd3a9a53fc96426d66fde13e5de",
       "path": "internal/infrastructure/rbac/client.go",
-      "blob_sha": "765c7ccddc4362205737e8330903b28c59a5f6e0",
-      "content_sha256": "f97dc6c10b955bbac080f06857811851aed03c348bef8288d3f1589d4f888397"
+      "blob_sha": "43b181d9e9bbc75f3482f7e01a3a0bd332c3d09e",
+      "content_sha256": "cf2541e933a107c55e3ea39dc0224c5576b629cce65256edf83c6634432a3090"
     },
     {
       "repository": "bemulima/ms-go-user",
-      "commit_sha": "540e0818befa75f39ef586440c84b157fbd5e647",
+      "commit_sha": "91c8a3803ab59cd3a9a53fc96426d66fde13e5de",
       "path": "internal/transport/http/middleware/auth_middleware.go",
       "blob_sha": "615a70ec8c386332c6b1c06c0aee091280fd0b69",
       "content_sha256": "80f95a1937909eac62448b21b9a8a74fdbf0a24d94dfd0c4e61f13bab2397d12"
+    },
+    {
+      "repository": "bemulima/ms-go-user",
+      "commit_sha": "91c8a3803ab59cd3a9a53fc96426d66fde13e5de",
+      "path": ".env.example",
+      "blob_sha": "afa961b131d71807ee7f99db25a825aa29b028ad",
+      "content_sha256": "ae67bb4945d819cc26e51b23141fa34612d0d63d7861ff037f9515fa4a0dba0b"
+    },
+    {
+      "repository": "bemulima/ms-go-user",
+      "commit_sha": "91c8a3803ab59cd3a9a53fc96426d66fde13e5de",
+      "path": "scripts/native_config.py",
+      "blob_sha": "2e0f35e59e03a69b258e27a94c52c47d1618687a",
+      "content_sha256": "2b811a374be1ad3d5149366327d80386af97c4c3153fa776e847753bd6c8c7a6"
     }
   ],
-  "reason": "Implemented outbound HTTP adapters and/or NATS consumers are declared from exact committed client, subscription, configuration, and process composition evidence. CSS Student validator stub sends no request; unwired legacy adapters do not assert expectations. External AI/Telegram/OAuth and owned databases are infrastructure dependencies.",
+  "reason": "Implemented outbound HTTP adapters and/or NATS consumers are declared from exact committed client, subscription, configuration, and process composition evidence. CSS Student validator stub sends no request; unwired legacy adapters do not assert expectations. External AI/Telegram/OAuth and owned databases are infrastructure dependencies. User RBAC HTTP now composes the published provider /api/v1 mount from origin-only MS_RBAC and matches all five v1 principal operations; the native RBAC default uses the same origin convention.",
   "inspected_paths": [
     "cmd/user-service-migrate/main.go",
     "cmd/user-service/app.go",
@@ -92,60 +106,18 @@
     "internal/usecase/user_service.go",
     "pkg/http/response.go",
     "pkg/log/logger.go",
-    "test/unit/native_config_test.py"
+    "test/unit/native_config_test.py",
+    ".env.example",
+    "scripts/native_config.py",
+    "internal/infrastructure/rbac/client_test.go",
+    "test/contract/rbac_client_test.go"
   ],
   "expectation_paths": [
     ".ai/contracts/consumers/ms-go-auth.event-unversioned.v1.json",
     ".ai/contracts/consumers/ms-go-filestorage.http.v1-v1.v1.json",
     ".ai/contracts/consumers/ms-go-image-processor.http.v1-v1.v1.json",
     ".ai/contracts/consumers/ms-go-rbac.event-unversioned.v1.json",
-    ".ai/contracts/consumers/ms-go-rbac.http-unversioned.v1.json"
+    ".ai/contracts/consumers/ms-go-rbac.http-v1.v1.json"
   ],
-  "unresolved_expectations": [
-    {
-      "consumer": "ms-go-user",
-      "provider": "ms-go-rbac",
-      "contract": "ms-go-rbac.http",
-      "operation": "GET /principal-role/get",
-      "expected_version": "unversioned",
-      "provider_version": "v1",
-      "reason": "operation_missing"
-    },
-    {
-      "consumer": "ms-go-user",
-      "provider": "ms-go-rbac",
-      "contract": "ms-go-rbac.http",
-      "operation": "GET /principal-permission/list",
-      "expected_version": "unversioned",
-      "provider_version": "v1",
-      "reason": "operation_missing"
-    },
-    {
-      "consumer": "ms-go-user",
-      "provider": "ms-go-rbac",
-      "contract": "ms-go-rbac.http",
-      "operation": "GET /principal-permission/get-by-permission",
-      "expected_version": "unversioned",
-      "provider_version": "v1",
-      "reason": "operation_missing"
-    },
-    {
-      "consumer": "ms-go-user",
-      "provider": "ms-go-rbac",
-      "contract": "ms-go-rbac.http",
-      "operation": "GET /principal-role/get-by-role",
-      "expected_version": "unversioned",
-      "provider_version": "v1",
-      "reason": "operation_missing"
-    },
-    {
-      "consumer": "ms-go-user",
-      "provider": "ms-go-rbac",
-      "contract": "ms-go-rbac.http",
-      "operation": "PATCH /principal-role/update",
-      "expected_version": "unversioned",
-      "provider_version": "v1",
-      "reason": "operation_missing"
-    }
-  ]
+  "unresolved_expectations": []
 }

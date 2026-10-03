@@ -2,7 +2,7 @@
   "schema": "architecture/v1",
   "kind": "service",
   "id": "ms-go-user",
-  "manifest_revision": 2,
+  "manifest_revision": 3,
   "identity": {
     "name": "ms-go-user",
     "kind": "go_backend_service"
@@ -119,12 +119,12 @@
       "target": "ms-go-rbac",
       "direction": "outbound",
       "description": {
-        "value": "Owner client invokes GET /principal-role/get, GET /principal-permission/list, GET /principal-permission/get-by-permission, GET /principal-role/get-by-role, PATCH /principal-role/update.",
+        "value": "Owner client invokes GET /api/v1/principal-role/get, GET /api/v1/principal-permission/list, GET /api/v1/principal-permission/get-by-permission, GET /api/v1/principal-role/get-by-role, PATCH /api/v1/principal-role/update. MS_RBAC is an origin; the adapter composes the provider-declared API mount.",
         "confidence": 1,
         "evidence": [
           {
             "source_path": "internal/infrastructure/rbac/client.go",
-            "checksum": "f97dc6c10b955bbac080f06857811851aed03c348bef8288d3f1589d4f888397"
+            "checksum": "cf2541e933a107c55e3ea39dc0224c5576b629cce65256edf83c6634432a3090"
           },
           {
             "source_path": "cmd/user-service/app.go",
