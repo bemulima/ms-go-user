@@ -61,20 +61,6 @@
       "path": "test/contract/rbac_client_test.go",
       "blob_sha": "3f446a84266895c45619b684771baa44ca47d8af",
       "content_sha256": "7e7cd1b5e8caf7ed9f7012494bc9a01b25d7ebbfba888eccbfe7a2b23e7121ad"
-    },
-    {
-      "repository": "bemulima/ms-go-rbac",
-      "commit_sha": "f5654d61caab44418767bbf0ce011ae9e13ae398",
-      "path": "internal/transport/http/router.go",
-      "blob_sha": "44f4be09b4766f1237124144b964ad8946e3e2d7",
-      "content_sha256": "025596f9b2a76db2e03afcaae74cff758fd6103ffaf0bbdd0ab625116aa17cb5"
-    },
-    {
-      "repository": "bemulima/ms-go-rbac",
-      "commit_sha": "f5654d61caab44418767bbf0ce011ae9e13ae398",
-      "path": "internal/transport/http/api/v1/router.go",
-      "blob_sha": "e34a93625b499609b85720033fe88a6918a4d91d",
-      "content_sha256": "676726196081c08c10e0f7086cd348c8dac16f19184ead7575ccbf5d279fe7b7"
     }
   ]
 }
