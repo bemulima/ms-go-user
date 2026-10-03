@@ -44,13 +44,6 @@
     {
       "repository": "bemulima/ms-go-user",
       "commit_sha": "5a3f1cbc0aafef5bee52e2c72d09c3497219c85c",
-      "path": ".env.example",
-      "blob_sha": "afa961b131d71807ee7f99db25a825aa29b028ad",
-      "content_sha256": "ae67bb4945d819cc26e51b23141fa34612d0d63d7861ff037f9515fa4a0dba0b"
-    },
-    {
-      "repository": "bemulima/ms-go-user",
-      "commit_sha": "5a3f1cbc0aafef5bee52e2c72d09c3497219c85c",
       "path": "scripts/native_config.py",
       "blob_sha": "2e0f35e59e03a69b258e27a94c52c47d1618687a",
       "content_sha256": "2b811a374be1ad3d5149366327d80386af97c4c3153fa776e847753bd6c8c7a6"
