@@ -44,6 +44,7 @@ class NativeConfigTests(unittest.TestCase):
 
         self.assertEqual(runtime["APP_HOST"], "127.0.0.1")
         self.assertEqual(runtime["APP_PORT"], "18082")
+        self.assertEqual(runtime["MS_RBAC"], "http://127.0.0.1:18080")
         self.assertEqual(runtime["MS_FILESTORAGE_URL"], "http://127.0.0.1:18085")
         self.assertEqual(runtime["FILESTORAGE_INTERNAL_TOKEN"], credentials["LW_FILESTORAGE_USER_TOKEN"])
         self.assertEqual(

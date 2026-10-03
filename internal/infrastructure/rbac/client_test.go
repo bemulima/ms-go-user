@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -19,7 +20,7 @@ func TestHTTPClient_AssignRole(t *testing.T) {
 		baseURL: "http://rbac-service",
 		client: newMockHTTPClient(func(req *http.Request) (*http.Response, error) {
 			require.Equal(t, http.MethodPatch, req.Method)
-			require.Equal(t, "/principal-role/update", req.URL.Path)
+			require.Equal(t, "/api/v1/principal-role/update", req.URL.Path)
 			require.NoError(t, json.NewDecoder(req.Body).Decode(&payload))
 			return &http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(strings.NewReader(""))}, nil
 		}),
@@ -41,7 +42,7 @@ func TestHTTPClient_GetRoleByUserID(t *testing.T) {
 		baseURL: "http://rbac-service",
 		client: newMockHTTPClient(func(req *http.Request) (*http.Response, error) {
 			require.Equal(t, http.MethodGet, req.Method)
-			require.Equal(t, "/principal-role/get", req.URL.Path)
+			require.Equal(t, "/api/v1/principal-role/get", req.URL.Path)
 			require.Equal(t, "user-789", req.URL.Query().Get("user_id"))
 			body := `{"role":"` + expectedRole + `"}`
 			return &http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(strings.NewReader(body))}, nil
@@ -61,4 +62,19 @@ func (m mockRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 
 func newMockHTTPClient(tripper mockRoundTripper) *http.Client {
 	return &http.Client{Transport: tripper}
+}
+
+func TestNewHTTPClient_ComposesProviderAPIRootFromOrigin(t *testing.T) {
+	for _, origin := range []string{"http://rbac-service:8082", "http://rbac-service:8082/"} {
+		t.Run(origin, func(t *testing.T) {
+			client := NewHTTPClient(origin, time.Second).(*httpClient)
+			client.client = newMockHTTPClient(func(req *http.Request) (*http.Response, error) {
+				require.Equal(t, "http://rbac-service:8082/api/v1/principal-role/get?user_id=user-123", req.URL.String())
+				return &http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(strings.NewReader(`{"role":"role-user"}`))}, nil
+			})
+			role, err := client.GetRoleByUserID(context.Background(), "user-123")
+			require.NoError(t, err)
+			require.Equal(t, "role-user", role)
+		})
+	}
 }

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"sync"
 	"time"
 
@@ -22,6 +23,9 @@ type Client interface {
 	CheckRole(ctx context.Context, userID, role string) (bool, error)
 	AssignRole(ctx context.Context, userID, role string) error
 }
+
+// rbacAPIRoot is the mount declared by ms-go-rbac internal/transport/http/router.go.
+const rbacAPIRoot = "/api/v1"
 
 type httpClient struct {
 	baseURL string
@@ -40,9 +44,9 @@ type cachingClient struct {
 	mu       sync.RWMutex
 }
 
-// NewHTTPClient creates an HTTP client for the RBAC service.
+// NewHTTPClient creates an HTTP client from an RBAC origin (scheme://host[:port]).
 func NewHTTPClient(baseURL string, timeout time.Duration) Client {
-	return &httpClient{baseURL: baseURL, client: &http.Client{Timeout: timeout}}
+	return &httpClient{baseURL: strings.TrimRight(baseURL, "/"), client: &http.Client{Timeout: timeout}}
 }
 
 // NewCachingClient wraps an RBAC client with a time-limited in-memory cache.
@@ -102,7 +106,7 @@ func (c *httpClient) AssignRole(ctx context.Context, userID, role string) error 
 
 func (c *httpClient) get(ctx context.Context, path string, params url.Values, out interface{}) error {
 	op := func() error {
-		endpoint := fmt.Sprintf("%s%s?%s", c.baseURL, path, params.Encode())
+		endpoint := fmt.Sprintf("%s%s?%s", c.baseURL+rbacAPIRoot, path, params.Encode())
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 		if err != nil {
 			return backoff.Permanent(err)
@@ -134,7 +138,7 @@ func (c *httpClient) sendJSON(ctx context.Context, method, path string, payload 
 		if err != nil {
 			return backoff.Permanent(err)
 		}
-		req, err := http.NewRequestWithContext(ctx, method, fmt.Sprintf("%s%s", c.baseURL, path), bytes.NewReader(body))
+		req, err := http.NewRequestWithContext(ctx, method, fmt.Sprintf("%s%s", c.baseURL+rbacAPIRoot, path), bytes.NewReader(body))
 		if err != nil {
 			return backoff.Permanent(err)
 		}

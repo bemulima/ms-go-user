@@ -37,7 +37,7 @@ these values:
 | --- | --- |
 | PostgreSQL | `127.0.0.1:5432`, database and role `lw_user` |
 | NATS | `nats://127.0.0.1:4222` |
-| RBAC HTTP | `http://127.0.0.1:18080/api/v1` |
+| RBAC HTTP | `http://127.0.0.1:18080` |
 | User Service HTTP port | `18082` |
 
 `USER_NATIVE_HTTP_PORT`, `USER_NATIVE_HTTP_HOST`,

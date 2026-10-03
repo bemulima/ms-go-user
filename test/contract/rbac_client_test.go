@@ -73,7 +73,7 @@ func newMockRBACHandler(t *testing.T) *mockRBACHandler {
 
 func (h *mockRBACHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Path {
-	case "/principal-role/update":
+	case "/api/v1/principal-role/update":
 		require.Equal(h.t, http.MethodPatch, r.Method)
 		h.assignCalled = true
 		var payload struct {
@@ -86,17 +86,17 @@ func (h *mockRBACHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		require.Equal(h.t, testUserID, payload.Value.UserID)
 		require.Equal(h.t, testRoleKey, payload.Value.Role)
 		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
-	case "/principal-role/get":
+	case "/api/v1/principal-role/get":
 		require.Equal(h.t, testUserID, r.URL.Query().Get("user_id"))
 		writeJSON(w, http.StatusOK, map[string]string{"role": testRoleKey})
-	case "/principal-permission/list":
+	case "/api/v1/principal-permission/list":
 		require.Equal(h.t, testUserID, r.URL.Query().Get("user_id"))
 		writeJSON(w, http.StatusOK, map[string][]string{"permissions": {testPerm}})
-	case "/principal-role/get-by-role":
+	case "/api/v1/principal-role/get-by-role":
 		require.Equal(h.t, testUserID, r.URL.Query().Get("user_id"))
 		require.Equal(h.t, testRoleKey, r.URL.Query().Get("role"))
 		writeJSON(w, http.StatusOK, map[string]bool{"allowed": true})
-	case "/principal-permission/get-by-permission":
+	case "/api/v1/principal-permission/get-by-permission":
 		require.Equal(h.t, testUserID, r.URL.Query().Get("user_id"))
 		require.Equal(h.t, testPerm, r.URL.Query().Get("permission"))
 		writeJSON(w, http.StatusOK, map[string]bool{"allowed": testPermBool})

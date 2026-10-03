@@ -72,7 +72,7 @@ def native_environment() -> dict[str, str]:
             "DB_SSLMODE": values.get("USER_NATIVE_DB_SSLMODE", "disable"),
             "DB_DSN": db_dsn,
             "NATS_URL": values.get("USER_NATIVE_NATS_URL", "nats://127.0.0.1:4222"),
-            "MS_RBAC": values.get("USER_NATIVE_RBAC_URL", "http://127.0.0.1:18080/api/v1"),
+            "MS_RBAC": values.get("USER_NATIVE_RBAC_URL", "http://127.0.0.1:18080"),
             "MS_FILESTORAGE_URL": values.get("USER_NATIVE_FILESTORAGE_URL", "http://127.0.0.1:18085"),
             "FILESTORAGE_INTERNAL_TOKEN": values.get("USER_NATIVE_FILESTORAGE_INTERNAL_TOKEN") or required(values, "LW_FILESTORAGE_USER_TOKEN"),
             "IMAGE_PROCESSOR_SERVICE_BASE_URL": values.get("USER_NATIVE_IMAGE_PROCESSOR_URL", "http://127.0.0.1:18086"),
