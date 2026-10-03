@@ -11,3 +11,8 @@ Two ownership conflicts remain. user_identity/user_provider and user-facing iden
 mount and the principal operation suffix. Existing configurations containing
 `/api/v1` must be changed to the origin when adopting this adapter. The mount is
 verified from ms-go-rbac router source, rather than inferred from other services.
+
+The adapter rejects non-HTTP(S) URLs, missing hosts, invalid ports, credentials,
+paths (including a trailing slash), queries, and fragments before any HTTP call.
+The constructor keeps the Client interface and returns configuration errors from
+all client operations.

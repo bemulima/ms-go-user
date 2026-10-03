@@ -6,8 +6,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -28,8 +30,9 @@ type Client interface {
 const rbacAPIRoot = "/api/v1"
 
 type httpClient struct {
-	baseURL string
-	client  *http.Client
+	baseURL   string
+	client    *http.Client
+	configErr error
 }
 
 type cacheEntry struct {
@@ -46,7 +49,35 @@ type cachingClient struct {
 
 // NewHTTPClient creates an HTTP client from an RBAC origin (scheme://host[:port]).
 func NewHTTPClient(baseURL string, timeout time.Duration) Client {
-	return &httpClient{baseURL: strings.TrimRight(baseURL, "/"), client: &http.Client{Timeout: timeout}}
+	return &httpClient{baseURL: baseURL, client: &http.Client{Timeout: timeout}, configErr: validateOrigin(baseURL)}
+}
+
+// validateOrigin rejects configuration components that would alter operation URLs.
+// The error intentionally omits the input, which could contain credentials.
+func validateOrigin(origin string) error {
+	invalid := fmt.Errorf("invalid MS_RBAC origin: expected http://host[:port] or https://host[:port] without path, credentials, query, or fragment")
+	u, err := url.Parse(origin)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Hostname() == "" || u.User != nil || origin != u.Scheme+"://"+u.Host {
+		return invalid
+	}
+	host := u.Hostname()
+	if strings.HasPrefix(u.Host, "[") {
+		if net.ParseIP(host) == nil {
+			return invalid
+		}
+	} else if strings.Contains(host, ":") {
+		return invalid
+	}
+	if strings.HasSuffix(u.Host, ":") {
+		return invalid
+	}
+	if port := u.Port(); port != "" {
+		number, err := strconv.Atoi(port)
+		if err != nil || number < 1 || number > 65535 {
+			return invalid
+		}
+	}
+	return nil
 }
 
 // NewCachingClient wraps an RBAC client with a time-limited in-memory cache.
@@ -105,6 +136,9 @@ func (c *httpClient) AssignRole(ctx context.Context, userID, role string) error 
 }
 
 func (c *httpClient) get(ctx context.Context, path string, params url.Values, out interface{}) error {
+	if c.configErr != nil {
+		return c.configErr
+	}
 	op := func() error {
 		endpoint := fmt.Sprintf("%s%s?%s", c.baseURL+rbacAPIRoot, path, params.Encode())
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
@@ -133,6 +167,9 @@ func (c *httpClient) get(ctx context.Context, path string, params url.Values, ou
 }
 
 func (c *httpClient) sendJSON(ctx context.Context, method, path string, payload interface{}) error {
+	if c.configErr != nil {
+		return c.configErr
+	}
 	op := func() error {
 		body, err := json.Marshal(payload)
 		if err != nil {
