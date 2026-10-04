@@ -95,7 +95,7 @@ func TestNewHTTPClient_RejectsNonOriginWithoutHTTPCalls(t *testing.T) {
 		t.Run(origin, func(t *testing.T) {
 			client := NewHTTPClient(origin, time.Second).(*httpClient)
 			calls := 0
-			client.client = newMockHTTPClient(func(req *http.Request) (*http.Response, error) {
+			client.client = newMockHTTPClient(func(_ *http.Request) (*http.Response, error) {
 				calls++
 				return &http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(strings.NewReader(`{}`))}, nil
 			})
