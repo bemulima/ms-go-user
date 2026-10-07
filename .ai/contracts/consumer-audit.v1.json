@@ -80,7 +80,6 @@
     "internal/infrastructure/persistence/postgres/user_provider_repo.go",
     "internal/infrastructure/persistence/postgres/user_repo.go",
     "internal/infrastructure/rbac/client.go",
-    "internal/infrastructure/tarantool/client.go",
     "internal/port/oauth_profile.go",
     "internal/port/user_repository.go",
     "internal/transport/http/admin/v1/handlers/handler.go",

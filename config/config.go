@@ -49,8 +49,7 @@ type Config struct {
 	AvatarPresetGroup           string `env:"AVATAR_PRESET_GROUP" envDefault:"avatar"`
 	AvatarFileKind              string `env:"AVATAR_FILE_KIND" envDefault:"USER_MEDIA"`
 
-	TarantoolURL string `env:"MS_TARANTOOL_URL"`
-	RBACURL      string `env:"MS_RBAC"`
+	RBACURL string `env:"MS_RBAC"`
 
 	NATSURL          string `env:"NATS_URL" envDefault:"nats://localhost:4222"`
 	NATSUserCreate   string `env:"NATS_SUBJECT_USER_CREATE" envDefault:"user.create-user"`

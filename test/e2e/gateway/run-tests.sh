@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
+set +x
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=fixture-verification-code.sh
+source "${SCRIPT_DIR}/fixture-verification-code.sh"
 
 GATEWAY_URL="${GATEWAY_URL:-http://localhost:8080}"
 HTTP_TIMEOUT="${HTTP_TIMEOUT:-30}"
@@ -37,6 +40,10 @@ append_check() {
 
 sanitize_evidence() {
   local evidence="$1"
+  # Responses can contain tokens, password hashes, or delivery codes.
+  if [[ "$evidence" == *"resp="* ]]; then
+    evidence="${evidence%%resp=*}resp=[omitted]"
+  fi
   if [[ "${evidence}" == *"resp=<html"* || "${evidence}" == *"resp=<HTML"* ]]; then
     echo "${evidence%%resp=*}resp=[HTML omitted]"
     return 0
@@ -178,6 +185,7 @@ main() {
   E2E_OK=0
   E2E_MISMATCHES=0
 
+  check_verification_fixture || exit 1
   check_deps
   check_gateway
 

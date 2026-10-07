@@ -51,10 +51,8 @@ dotenv file; the helper does not print their values.
 FileStorage and Image Processor clients are configured at
 `127.0.0.1:18085` and `127.0.0.1:18086` by default. Their HTTP calls are only
 needed for avatar operations; this native startup check does not require those
-application services to be running. `MS_TARANTOOL_URL` is unset: the current
-User Service composition does not instantiate its Tarantool client, and that
-client expects an identity application HTTP endpoint rather than raw Tarantool
-on port 3301.
+application services to be running. Identity verification belongs to Auth; the
+User Service has no verification-service endpoint configuration.
 
 `GET /internal/health` is the existing listener availability endpoint. It does
 not probe PostgreSQL or NATS. User Service connects to NATS during startup;

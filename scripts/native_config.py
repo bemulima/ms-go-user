@@ -77,7 +77,6 @@ def native_environment() -> dict[str, str]:
             "FILESTORAGE_INTERNAL_TOKEN": values.get("USER_NATIVE_FILESTORAGE_INTERNAL_TOKEN") or required(values, "LW_FILESTORAGE_USER_TOKEN"),
             "IMAGE_PROCESSOR_SERVICE_BASE_URL": values.get("USER_NATIVE_IMAGE_PROCESSOR_URL", "http://127.0.0.1:18086"),
             "IMAGE_PROCESSOR_INTERNAL_TOKEN": values.get("USER_NATIVE_IMAGE_PROCESSOR_INTERNAL_TOKEN") or required(values, "LW_USER_IMAGE_PROCESSOR_TOKEN"),
-            "MS_TARANTOOL_URL": values.get("USER_NATIVE_TARANTOOL_URL", ""),
             "JWT_SECRET": values.get("USER_NATIVE_JWT_SECRET") or required(values, "LW_AUTH_JWT_SECRET"),
             "JWT_ISSUER": values.get("USER_NATIVE_JWT_ISSUER", "lw-auth"),
             "JWT_AUDIENCE": values.get("USER_NATIVE_JWT_AUDIENCE", "frontend"),

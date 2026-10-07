@@ -1,4 +1,5 @@
-// Package tarantool provides the User service's legacy registration client.
+// Package tarantool preserves only a legacy hermetic registration-client fixture.
+// It is not wired by the User process; Auth owns production verification.
 package tarantool
 
 import (

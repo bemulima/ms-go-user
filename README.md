@@ -4,7 +4,7 @@ Production-ready Go microservice implementing user management with Clean Archite
 
 ## Features
 
-- Two-step registration via Tarantool microservice
+- Idempotent user provisioning from Auth through Core NATS; identity verification belongs to Auth
 - Classic and OAuth2 (Google/GitHub) authentication with JWT issuance
 - RBAC integration for role and permission checks
 - Postgres persistence via GORM with UUID primary keys
@@ -96,7 +96,7 @@ internal/domain/              # domain entities and value objects
 internal/usecase/             # business logic (auth, user, manage)
 internal/adapters/http/        # Echo router, handlers, middleware
 internal/adapters/postgres/    # GORM repositories
-internal/adapters/{rbac,filestorage,imageprocessor,tarantool}/ # external clients
+internal/adapters/{rbac,filestorage,imageprocessor}/ # external clients
 internal/app/                 # composition root / DI
 pkg/                          # shared utility packages (logging, HTTP helpers)
 migrations/                   # database migrations

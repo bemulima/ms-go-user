@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+set +x
 
 wiki_ref="wiki/USER_PROFILE.md (Обновление профиля)"
 USER_API="/api/user/v1/users"
@@ -18,13 +19,13 @@ st="$(printf '%s\n' "${raw}" | extract_status)"
 resp="$(printf '%s\n' "${raw}" | extract_body)"
 
 if [[ "${st}" != "200" ]]; then
-  record_mismatch "ms-go-user" "${wiki_ref}" "HTTP 200" "HTTP ${st}" "PATCH ${USER_API}/me resp=${resp}" "blocker" "ms-go-user/ms-gateway"
+  record_mismatch "ms-go-user" "${wiki_ref}" "HTTP 200" "HTTP ${st}" "PATCH ${USER_API}/me resp=[omitted]" "blocker" "ms-go-user/ms-gateway"
   return 0
 fi
 
 got_dn="$(echo "${resp}" | jq -r '.display_name // .data.display_name // empty')"
 if [[ "${got_dn}" != "${display_name}" ]]; then
-  record_mismatch "ms-go-user" "${wiki_ref}" "response.display_name обновлён" "display_name не совпадает" "PATCH ${USER_API}/me resp=${resp}" "major" "ms-go-user"
+  record_mismatch "ms-go-user" "${wiki_ref}" "response.display_name обновлён" "display_name не совпадает" "PATCH ${USER_API}/me resp=[omitted]" "major" "ms-go-user"
   return 0
 fi
 record_ok "user update profile (display_name) returns 200 and persists"
@@ -37,7 +38,7 @@ bad_resp="$(printf '%s\n' "${bad_raw}" | extract_body)"
 if [[ "${bad_st}" == "400" ]]; then
   record_ok "user update profile rejects invalid avatar_url (400)"
 else
-  record_mismatch "ms-go-user" "${wiki_ref} (валидация avatar_url)" "HTTP 400" "HTTP ${bad_st}" "PATCH ${USER_API}/me (invalid avatar_url) resp=${bad_resp}" "minor" "ms-go-user"
+  record_mismatch "ms-go-user" "${wiki_ref} (валидация avatar_url)" "HTTP 400" "HTTP ${bad_st}" "PATCH ${USER_API}/me (invalid avatar_url) resp=[omitted]" "minor" "ms-go-user"
 fi
 
 return 0

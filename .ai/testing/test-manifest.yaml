@@ -389,8 +389,8 @@ exceptions:
       description: "Only the contract.consumer baseline gap for ms-go-user is in scope; it covers mapped command(s) test:contract."
       commands: [test:contract]
     owner: "ms-go-user service owners"
-    reason: "RBAC and Tarantool client contract tests exist, but provider compatibility and external dependency outcomes are not comprehensively gated."
-    evidence: ["test/contract/rbac_client_test.go", "test/contract/tarantool_client_test.go"]
+    reason: "RBAC client contract tests exist, but provider compatibility and external dependency outcomes are not comprehensively gated. The unwired legacy registration-client fixture asserts no production dependency."
+    evidence: ["test/contract/rbac_client_test.go"]
     created_at: 2026-09-27
     expires_at: 2026-12-26
     remediation_target: "Reassess this category with the service owner at the next testing baseline review; add focused verification only if the category remains owned."

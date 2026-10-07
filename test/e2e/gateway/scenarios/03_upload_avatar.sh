@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+set +x
 
 wiki_ref="wiki/USER_PROFILE.md (Загрузка аватара)"
 USER_API="/api/user/v1/users"
@@ -40,12 +41,12 @@ code="$(curl -sS --max-time "${HTTP_TIMEOUT}" \
 resp="$(cat "${tmp_resp}")"
 
 if [[ "${code}" != "201" ]]; then
-  record_mismatch "ms-go-user" "${wiki_ref}" "HTTP 201" "HTTP ${code}" "POST ${USER_API}/me/avatar resp=${resp}" "blocker" "ms-go-user/ms-go-filestorage/ms-go-image-processor/ms-gateway"
+  record_mismatch "ms-go-user" "${wiki_ref}" "HTTP 201" "HTTP ${code}" "POST ${USER_API}/me/avatar resp=[omitted]" "blocker" "ms-go-user/ms-go-filestorage/ms-go-image-processor/ms-gateway"
   return 0
 fi
 
 if ! echo "${resp}" | jq -e '(.download_url? or .data.download_url?) and (.profile.avatar_url? or .data.profile.avatar_url? or .data.profile.avatarURL?)' >/dev/null 2>&1; then
-  record_mismatch "ms-go-user" "${wiki_ref}" "response содержит download_url + profile.avatar_url" "поля отсутствуют" "POST ${USER_API}/me/avatar resp=${resp}" "major" "ms-go-user"
+  record_mismatch "ms-go-user" "${wiki_ref}" "response содержит download_url + profile.avatar_url" "поля отсутствуют" "POST ${USER_API}/me/avatar resp=[omitted]" "major" "ms-go-user"
   return 0
 fi
 
