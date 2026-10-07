@@ -41,7 +41,11 @@ func TestT16SignupUserProvider(t *testing.T) {
 	if err != nil {
 		t.Fatal("cannot access User database connection")
 	}
-	defer sqlDB.Close()
+	defer func() {
+		if err := sqlDB.Close(); err != nil {
+			t.Error("cannot close owned User database connection")
+		}
+	}()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	var database, server string
