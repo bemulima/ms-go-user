@@ -48,6 +48,7 @@ type Config struct {
 	ImageProcessorInternalToken string `env:"IMAGE_PROCESSOR_INTERNAL_TOKEN"`
 	AvatarPresetGroup           string `env:"AVATAR_PRESET_GROUP" envDefault:"avatar"`
 	AvatarFileKind              string `env:"AVATAR_FILE_KIND" envDefault:"USER_MEDIA"`
+	ImageProcessingMaintenance  bool   `env:"IMAGE_PROCESSING_MAINTENANCE" envDefault:"false"`
 
 	RBACURL string `env:"MS_RBAC"`
 

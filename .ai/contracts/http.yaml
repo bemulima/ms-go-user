@@ -14,3 +14,11 @@ admin_methods: [GET collection, GET item, POST collection, PATCH item, PATCH ite
 internal:
   - {method: GET, path: /internal/health}
   - {method: POST, path: /internal/v1/users/active/resolve, auth: X-Internal-Token, max_body_bytes: 65536, max_ids: 1000}
+avatar_image_maintenance:
+  env: IMAGE_PROCESSING_MAINTENANCE
+  default: false
+  scope: EAGER_avatar_upload_only
+  before_effects: [filestorage_upload, profile_update]
+  rejected: {status: 503, retry_after_seconds: 1, code: image_processing_maintenance}
+  post_upload_failure: image_processing_outcome_unknown_reconcile
+  old_process_transition: unproven

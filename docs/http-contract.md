@@ -13,3 +13,5 @@ adapter supplies `/api/v1` for GET principal-role/get, principal-role/get-by-rol
 principal-permission/list, principal-permission/get-by-permission, and PATCH
 principal-role/update. Role updates retain the `{ "value": { "user_id", "role" } }`
 payload; query parameters and authentication behavior are unchanged.
+
+`IMAGE_PROCESSING_MAINTENANCE=true` is read at User process startup and rejects EAGER avatar uploads with HTTP 503, `Retry-After: 1`, and `image_processing_maintenance` before FileStorage upload or profile mutation. Other profile routes and non-EAGER uploads are not gated. The default is false. This startup-only control does not fence already admitted calls or the currently running old binary; operators must separately establish safe transition and drain before using it as a maintenance boundary. If Image Processor fails after the upload and profile change, the caller receives `image_processing_outcome_unknown`: read back profile and reconcile the original and any derived files before retry. It is not proof of rollback.

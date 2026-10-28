@@ -84,6 +84,7 @@ func New(_ context.Context) (*App, error) {
 	}
 
 	apiHandler := apiv1.NewHandler(userService, filestorageClient, imageProcClient, cfg.AvatarPresetGroup, cfg.AvatarFileKind)
+	apiHandler.SetImageProcessingMaintenance(cfg.ImageProcessingMaintenance)
 	adminHandler := adminv1.NewHandler(manageService, filestorageClient)
 
 	authMW := mw.NewAuthMiddleware(cfg, logger, rbacClient, userRepo, natsConn)
