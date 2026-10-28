@@ -85,6 +85,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserProfile"
+  /users/me/avatar:
+    post:
+      security: [{bearerAuth: []}]
+      summary: Upload current user avatar
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: {type: string, format: binary}
+                processing_mode: {type: string, enum: [EAGER, LAZY, DISABLED], default: DISABLED}
+      responses:
+        "201": {description: Avatar stored}
+        "503": {description: EAGER processing unavailable before upload; retry later}
+        "500": {description: Processing outcome may be unknown after upload; reconcile before retry}
   /users/{id}:
     get:
       security: [{bearerAuth: []}]

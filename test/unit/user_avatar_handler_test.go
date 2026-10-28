@@ -151,7 +151,7 @@ func TestUploadAvatar_DoesNotExposeDownstreamErrors(t *testing.T) {
 			name:       "image processing",
 			imageErr:   errors.New(downstreamError),
 			wantStatus: http.StatusInternalServerError,
-			wantPublic: "avatar processing failed",
+			wantPublic: "read back profile and reconcile before retry",
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

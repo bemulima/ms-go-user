@@ -8,3 +8,5 @@ commands:
   - {name: migrate-up, run: task migrate-up, requires_approval: true, risk: database-write}
   - {name: migrate-down, run: task migrate-down, requires_approval: true, risk: destructive-database-write}
   - {name: e2e, run: go test ./test/e2e/..., requires_approval: true, risk: external-services}
+
+  - {name: lc08-isolated-legacy-qualification, run: 'go test ./cmd/user-service -run TestLC08LegacyUserBinaryIdleShutdown -count=1', requires_approval: true, risk: isolated-fixture-runtime}

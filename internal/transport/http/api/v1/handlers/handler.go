@@ -20,12 +20,16 @@ import (
 
 // Handler serves public user profile and avatar requests.
 type Handler struct {
-	users        service.UserService
-	storage      filestorage.Client
-	imageProc    imageprocessor.Client
-	avatarPreset string
-	avatarKind   string
+	users                      service.UserService
+	storage                    filestorage.Client
+	imageProc                  imageprocessor.Client
+	avatarPreset               string
+	avatarKind                 string
+	imageProcessingMaintenance bool
 }
+
+// SetImageProcessingMaintenance is configured once before the server starts.
+func (h *Handler) SetImageProcessingMaintenance(enabled bool) { h.imageProcessingMaintenance = enabled }
 
 // NewHandler creates the public user handler and its avatar dependencies.
 func NewHandler(users service.UserService, storage filestorage.Client, imgProc imageprocessor.Client, avatarPreset, avatarKind string) *Handler {
@@ -193,6 +197,11 @@ func (h *Handler) UploadAvatar(c echo.Context) error {
 	default:
 		return res.ErrorJSON(c, http.StatusBadRequest, "bad_request", "invalid processing_mode", middleware.RequestIDFromCtx(c), nil)
 	}
+	// Admission must precede FileStorage upload and profile mutation.
+	if processingMode == "EAGER" && h.imageProcessingMaintenance {
+		c.Response().Header().Set("Retry-After", "1")
+		return res.ErrorJSON(c, http.StatusServiceUnavailable, "image_processing_maintenance", "retry later", middleware.RequestIDFromCtx(c), nil)
+	}
 
 	uploadResp, err := h.storage.Upload(c.Request().Context(), filestorage.UploadRequest{
 		OwnerID:        userID,
@@ -226,7 +235,9 @@ func (h *Handler) UploadAvatar(c echo.Context) error {
 			return res.ErrorJSON(c, http.StatusInternalServerError, "processing_failed", "avatar processing failed", middleware.RequestIDFromCtx(c), nil)
 		}
 		if err := h.imageProc.GenerateWithDelegation(c.Request().Context(), uploadResp.ID, userID, h.avatarKind, h.avatarPreset, nil, processingDelegation); err != nil {
-			return res.ErrorJSON(c, http.StatusInternalServerError, "processing_failed", "avatar processing failed", middleware.RequestIDFromCtx(c), nil)
+			// The source upload and profile update already happened. Do not tell
+			// clients to replay the whole operation without first reconciling it.
+			return res.ErrorJSON(c, http.StatusInternalServerError, "image_processing_outcome_unknown", "read back profile and reconcile before retry", middleware.RequestIDFromCtx(c), nil)
 		}
 	}
 
